@@ -1,0 +1,70 @@
+{
+    "name": "atldays/laravel-sculptor",
+    "description": "This package provides a convenient interface for building complex database queries using Eloquent ORM in Laravel.",
+    "keywords": [
+        "sql",
+        "database",
+        "eloquent",
+        "model",
+        "repository",
+        "builder",
+        "laravel",
+        "atldays"
+    ],
+    "minimum-stability": "stable",
+    "license": "MIT",
+    "homepage": "https://github.com/atldays/laravel-sculptor",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Anjey Tsibylskij",
+            "homepage": "https://github.com/atldays",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Atldays\\Sculptor\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Atldays\\Sculptor\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Atldays\\Sculptor\\SculptorServiceProvider"
+            ]
+        }
+    },
+    "require": {
+        "php": "^8.2",
+        "webmozart/assert": "^1.11",
+        "atldays/laravel-eloquent-filters": "^2.0",
+        "atldays/laravel-eloquent-query-cache": "^1.0",
+        "illuminate/support": "^10.0|^11.0",
+        "illuminate/contracts": "^10.0|^11.0",
+        "illuminate/database": "^10.0|^11.0",
+        "illuminate/cache": "^10.0|^11.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.21",
+        "mockery/mockery": "^1.6",
+        "orchestra/testbench": "^8.1.1|^9.0|^10.0",
+        "phpunit/phpunit": "^9.5.25|^10.0|^11.0"
+    },
+    "scripts": {
+        "format": "vendor/bin/pint",
+        "format:test": "vendor/bin/pint --test",
+        "test": "vendor/bin/phpunit --no-coverage"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "suggest": {
+        "barryvdh/laravel-debugbar": "For debugging"
+    },
+    "prefer-stable": true
+}
