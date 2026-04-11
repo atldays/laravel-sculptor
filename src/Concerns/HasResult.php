@@ -2,6 +2,9 @@
 
 namespace Atldays\Sculptor\Concerns;
 
+use Atldays\Sculptor\Events\ResultExecuted;
+use Illuminate\Contracts\Container\BindingResolutionException;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Facades\App;
 
 /**
@@ -9,7 +12,6 @@ use Illuminate\Support\Facades\App;
  */
 trait HasResult
 {
-
     /**
      * @return mixed
      */
@@ -20,6 +22,7 @@ trait HasResult
      *
      * @param mixed ...$arguments
      * @return static
+     * @throws BindingResolutionException
      */
     public static function make(mixed ...$arguments): static
     {
@@ -29,9 +32,25 @@ trait HasResult
     /**
      * @param mixed ...$args
      * @return TResult
+     * @throws BindingResolutionException
      */
     public static function result(mixed ...$args): mixed
     {
-        return debugbar_measure(static::class, fn() => static::make(...$args)->effect());
+        $name = static::class;
+        $startedAt = microtime(true);
+
+        try {
+            return static::make(...$args)->effect();
+        } finally {
+            $finishedAt = microtime(true);
+
+            if (App::bound(Dispatcher::class)) {
+                App::make(Dispatcher::class)->dispatch(new ResultExecuted(
+                    name: $name,
+                    startedAt: $startedAt,
+                    finishedAt: $finishedAt,
+                ));
+            }
+        }
     }
 }
