@@ -19,6 +19,7 @@ readonly class CacheAttributeProvider
     /**
      * @param string|ReflectionClass $class
      * @return self
+     * @throws ReflectionException
      */
     public static function make(string|ReflectionClass $class): self
     {
@@ -28,6 +29,7 @@ readonly class CacheAttributeProvider
     /**
      * @param string|ReflectionClass $class
      * @return CacheContract
+     * @throws ReflectionException
      */
     public static function resolve(string|ReflectionClass $class): CacheContract
     {
@@ -67,8 +69,12 @@ readonly class CacheAttributeProvider
     private function find(ReflectionClass $class): ?CacheStoreAttribute
     {
         foreach ($class->getAttributes() as $attribute) {
-            if (is_class_implements_interface($attribute->getName(), CacheStoreAttribute::class)) {
-                return $attribute->newInstance();
+            if (is_subclass_of($attribute->getName(), CacheStoreAttribute::class)) {
+                $instance = $attribute->newInstance();
+
+                if ($instance instanceof CacheStoreAttribute) {
+                    return $instance;
+                }
             }
         }
 
