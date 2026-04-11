@@ -10,8 +10,11 @@ use Webmozart\Assert\Assert;
 
 /**
  * @mixin WithQuery&WithLimit
+ *
  * @template TModel of Model
+ *
  * @property $model class-string<TModel>
+ *
  * @extends HasResult<Collection<array-key, TModel>>
  */
 trait QueryResultCollection

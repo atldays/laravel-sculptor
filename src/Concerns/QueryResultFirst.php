@@ -8,8 +8,11 @@ use Webmozart\Assert\Assert;
 
 /**
  * @mixin WithQuery
+ *
  * @template TModel of Model
+ *
  * @property $model class-string<TModel>
+ *
  * @extends HasResult<TModel>
  */
 trait QueryResultFirst

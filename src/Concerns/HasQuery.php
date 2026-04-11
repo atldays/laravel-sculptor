@@ -14,14 +14,8 @@ trait HasQuery
 {
     use HasModel;
 
-    /**
-     * @var array
-     */
     private array $columns = [];
 
-    /**
-     * @var EloquentFilters|null
-     */
     private ?EloquentFilters $filters = null;
 
     /**
@@ -29,9 +23,6 @@ trait HasQuery
      */
     private ?Collection $relations = null;
 
-    /**
-     * @var int|null
-     */
     private ?int $limit = null;
 
     /**
@@ -39,7 +30,7 @@ trait HasQuery
      */
     public function select(): ?array
     {
-        if (!empty($this->columns)) {
+        if (! empty($this->columns)) {
             return $this->columns;
         }
 
@@ -55,7 +46,6 @@ trait HasQuery
     }
 
     /**
-     * @param string|array $columns
      * @return $this
      */
     public function withSelect(string|array $columns): static
@@ -70,12 +60,11 @@ trait HasQuery
     }
 
     /**
-     * @param EloquentFilterContract ...$filter
      * @return $this
      */
     public function addFilter(EloquentFilterContract ...$filter): static
     {
-        ($this->filters ??= new EloquentFilters())->push(...$filter);
+        ($this->filters ??= new EloquentFilters)->push(...$filter);
 
         return $this;
     }
@@ -95,7 +84,7 @@ trait HasQuery
     }
 
     /**
-     * @param string|array|Collection<array-key, string|callable> $relations
+     * @param  string|array|Collection<array-key, string|callable>  $relations
      * @return $this
      */
     public function withRelations(string|array|Collection $relations): static
@@ -111,10 +100,6 @@ trait HasQuery
         return $this;
     }
 
-    /**
-     * @param Collection $relations
-     * @return Collection
-     */
     protected function prepareRelations(Collection $relations): Collection
     {
         return $relations;
@@ -141,7 +126,6 @@ trait HasQuery
     }
 
     /**
-     * @param int $limit
      * @return $this
      */
     public function limit(int $limit): static
@@ -151,9 +135,6 @@ trait HasQuery
         return $this;
     }
 
-    /**
-     * @return bool
-     */
     public function hasLimit(): bool
     {
         return is_int($this->limit) && $this->limit > 0;
@@ -169,9 +150,6 @@ trait HasQuery
         return $this;
     }
 
-    /**
-     * @return Builder
-     */
     public function query(): Builder
     {
         $query = $this->newModel()->query()->select($this->select());

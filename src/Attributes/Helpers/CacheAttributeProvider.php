@@ -11,14 +11,9 @@ use ReflectionException;
 
 readonly class CacheAttributeProvider
 {
-    /**
-     * @var ReflectionClass
-     */
     protected ReflectionClass $class;
 
     /**
-     * @param string|ReflectionClass $class
-     * @return self
      * @throws ReflectionException
      */
     public static function make(string|ReflectionClass $class): self
@@ -27,8 +22,6 @@ readonly class CacheAttributeProvider
     }
 
     /**
-     * @param string|ReflectionClass $class
-     * @return CacheContract
      * @throws ReflectionException
      */
     public static function resolve(string|ReflectionClass $class): CacheContract
@@ -44,28 +37,18 @@ readonly class CacheAttributeProvider
         $this->class = $class instanceof ReflectionClass ? $class : new ReflectionClass($class);
     }
 
-    /**
-     * @return string
-     */
     public function store(): string
     {
-        $attribute = $this->find($this->class) ?: new DefaultCacheStore();
+        $attribute = $this->find($this->class) ?: new DefaultCacheStore;
 
         return $attribute->store();
     }
 
-    /**
-     * @return CacheContract
-     */
     public function cache(): CacheContract
     {
         return Cache::store($this->store());
     }
 
-    /**
-     * @param ReflectionClass $class
-     * @return CacheStoreAttribute|null
-     */
     private function find(ReflectionClass $class): ?CacheStoreAttribute
     {
         foreach ($class->getAttributes() as $attribute) {

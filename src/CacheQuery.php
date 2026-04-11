@@ -2,9 +2,9 @@
 
 namespace Atldays\Sculptor;
 
+use Atldays\QueryCache\Query\Builder as CacheQueryBuilder;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Atldays\QueryCache\Query\Builder as CacheQueryBuilder;
 use Webmozart\Assert\Assert;
 
 abstract class CacheQuery extends Query implements Contracts\WithCache
@@ -12,7 +12,7 @@ abstract class CacheQuery extends Query implements Contracts\WithCache
     use Concerns\HasCache;
 
     /**
-     * @param Collection<array-key, string|callable> $relations
+     * @param  Collection<array-key, string|callable>  $relations
      * @return Collection<string, callable>
      */
     protected function prepareRelations(Collection $relations): Collection

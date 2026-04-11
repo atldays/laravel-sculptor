@@ -20,8 +20,6 @@ trait HasResult
     /**
      * Instantiate a new class with the arguments.
      *
-     * @param mixed ...$arguments
-     * @return static
      * @throws BindingResolutionException
      */
     public static function make(mixed ...$arguments): static
@@ -30,8 +28,8 @@ trait HasResult
     }
 
     /**
-     * @param mixed ...$args
      * @return TResult
+     *
      * @throws BindingResolutionException
      */
     public static function result(mixed ...$args): mixed

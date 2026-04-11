@@ -2,10 +2,7 @@
 
 namespace Atldays\Sculptor;
 
-abstract class Query implements
-    Contracts\WithQuery,
-    Contracts\WithModel,
-    Contracts\WithLimit
+abstract class Query implements Contracts\WithLimit, Contracts\WithModel, Contracts\WithQuery
 {
     use Concerns\HasQuery;
 }

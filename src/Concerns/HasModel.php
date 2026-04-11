@@ -7,6 +7,7 @@ use Webmozart\Assert\Assert;
 
 /**
  * @template TModel of Model
+ *
  * @property class-string<TModel> $model
  */
 trait HasModel

@@ -11,8 +11,5 @@ interface WithModel
      */
     public function model(): string;
 
-    /**
-     * @return Model
-     */
     public function newModel(): Model;
 }
