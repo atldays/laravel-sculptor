@@ -2,37 +2,17 @@
 
 namespace Atldays\Sculptor;
 
-use Illuminate\Support\ServiceProvider;
+use Atldays\Sculptor\Console\Commands\FlushCacheCommand;
+use Spatie\LaravelPackageTools\Package;
+use Spatie\LaravelPackageTools\PackageServiceProvider;
 
-class SculptorServiceProvider extends ServiceProvider
+class SculptorServiceProvider extends PackageServiceProvider
 {
-    /**
-     * Register services.
-     *
-     * @return void
-     */
-    public function register(): void
+    public function configurePackage(Package $package): void
     {
-        $this->mergeConfigFrom(
-            __DIR__ . '/../config/sculptor.php', 'sculptor'
-        );
-    }
-
-    /**
-     * Bootstrap services.
-     *
-     * @return void
-     */
-    public function boot(): void
-    {
-        if ($this->app->runningInConsole()) {
-            $this->publishes([
-                __DIR__ . '/../config/sculptor.php' => $this->app->configPath('sculptor.php'),
-            ], 'config');
-
-            $this->commands([
-                Console\Commands\FlushCacheCommand::class,
-            ]);
-        }
+        $package
+            ->name('sculptor')
+            ->hasConfigFile()
+            ->hasCommand(FlushCacheCommand::class);
     }
 }
