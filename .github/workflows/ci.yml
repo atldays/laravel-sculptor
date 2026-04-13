@@ -62,6 +62,10 @@ jobs:
             laravel: "^13.0"
             testbench: "11.x-dev@dev"
             phpunit: "^12.5"
+          - php: "8.5"
+            laravel: "^13.0"
+            testbench: "11.x-dev@dev"
+            phpunit: "^12.5"
 
     steps:
       - name: Checkout
