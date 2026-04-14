@@ -3,13 +3,12 @@
 namespace Atldays\Sculptor\Tests\Fixtures\Queries;
 
 use Atldays\Sculptor\Attributes\CacheStore;
-use Atldays\Sculptor\BuilderCachedQuery;
+use Atldays\Sculptor\CachedQuery;
 use Atldays\Sculptor\Concerns\QueryResultCollection;
-use Atldays\Sculptor\Tests\Fixtures\Filters\PublishedFilter;
 use Atldays\Sculptor\Tests\Fixtures\Models\Post;
 
 #[CacheStore('array')]
-class CachedPostsQuery extends BuilderCachedQuery
+class InspectableCachedPostsQuery extends CachedQuery
 {
     use QueryResultCollection;
 
@@ -19,10 +18,11 @@ class CachedPostsQuery extends BuilderCachedQuery
 
     public function __construct()
     {
-        $this
-            ->addFilter(new PublishedFilter)
-            ->limit(10)
-            ->setCacheFor(120)
-            ->setCacheTags('posts', 'published');
+        $this->limit(10)->setCacheFor(120)->setCacheTags('posts');
+    }
+
+    public function exposedCacheKey(string $kind = 'collection'): string
+    {
+        return $this->cacheKey($kind);
     }
 }

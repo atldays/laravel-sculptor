@@ -6,6 +6,7 @@ use Atldays\Sculptor\Tests\Fixtures\Filters\PublishedFilter;
 use Atldays\Sculptor\Tests\Fixtures\Models\Author;
 use Atldays\Sculptor\Tests\Fixtures\Models\Post;
 use Atldays\Sculptor\Tests\Fixtures\Queries\ArraySelectPostsQuery;
+use Atldays\Sculptor\Tests\Fixtures\Queries\BasePostsQuery;
 use Atldays\Sculptor\Tests\Fixtures\Queries\FirstPostQuery;
 use Atldays\Sculptor\Tests\Fixtures\Queries\PostsQuery;
 use Atldays\Sculptor\Tests\Fixtures\Queries\StringSelectPostsQuery;
@@ -104,5 +105,20 @@ class QueryTest extends TestCase
         Post::create(['title' => 'Second', 'published' => true]);
 
         $this->assertSame($first->id, FirstPostQuery::result()?->id);
+    }
+
+    public function test_base_query_can_be_used_without_filters_integration(): void
+    {
+        $author = Author::create(['name' => 'Jane']);
+
+        Post::create(['author_id' => $author->id, 'title' => 'Visible', 'published' => true]);
+        Post::create(['author_id' => $author->id, 'title' => 'Hidden', 'published' => false]);
+
+        $result = BasePostsQuery::make()
+            ->limit(10)
+            ->effect();
+
+        $this->assertCount(2, $result);
+        $this->assertTrue($result->every(fn (Post $post) => $post->relationLoaded('author')));
     }
 }

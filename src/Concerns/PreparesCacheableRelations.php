@@ -1,16 +1,13 @@
 <?php
 
-namespace Atldays\Sculptor;
+namespace Atldays\Sculptor\Concerns;
 
 use Atldays\QueryCache\Query\Builder as CacheQueryBuilder;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Webmozart\Assert\Assert;
 
-abstract class CacheQuery extends Query implements Contracts\WithCache
+trait PreparesCacheableRelations
 {
-    use Concerns\HasCache;
-
     /**
      * @param  Collection<array-key, string|callable>  $relations
      * @return Collection<string, callable>
@@ -35,7 +32,7 @@ abstract class CacheQuery extends Query implements Contracts\WithCache
             }
 
             return $relations->put($relation, function (Builder $query) use ($time, $tags, $store, $closure) {
-                /** @var $query CacheQueryBuilder&Builder */
+                /** @var CacheQueryBuilder&Builder $query */
                 $query->cacheDriver($store)->cacheFor($time)->cacheTags($tags);
 
                 if ($closure) {
@@ -43,21 +40,5 @@ abstract class CacheQuery extends Query implements Contracts\WithCache
                 }
             });
         }, collect());
-    }
-
-    /**
-     * @return CacheQueryBuilder&Builder
-     */
-    public function query(): Builder
-    {
-        /** @var CacheQueryBuilder&Builder $query */
-        $query = parent::query();
-
-        Assert::isInstanceOf($query->getQuery(), CacheQueryBuilder::class);
-
-        return $query
-            ->cacheFor($this->cacheFor())
-            ->cacheTags($this->cacheTags())
-            ->cacheDriver($this->cacheStore());
     }
 }

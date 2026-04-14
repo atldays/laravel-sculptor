@@ -2,8 +2,6 @@
 
 namespace Atldays\Sculptor\Concerns;
 
-use Atldays\EloquentFilters\Contracts\EloquentFilterContract;
-use Atldays\EloquentFilters\EloquentFilters;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -15,8 +13,6 @@ trait HasQuery
     use HasModel;
 
     private array $columns = [];
-
-    private ?EloquentFilters $filters = null;
 
     /**
      * @var Collection<array-key, string|callable>|null
@@ -55,16 +51,6 @@ trait HasQuery
         }
 
         $this->columns = $columns;
-
-        return $this;
-    }
-
-    /**
-     * @return $this
-     */
-    public function addFilter(EloquentFilterContract ...$filter): static
-    {
-        ($this->filters ??= new EloquentFilters)->push(...$filter);
 
         return $this;
     }
@@ -156,10 +142,6 @@ trait HasQuery
 
         if (($relations = $this->relations())->isNotEmpty()) {
             $query->with($relations->all());
-        }
-
-        if (($filters = $this->filters)?->isNotEmpty()) {
-            $query->filter($filters);
         }
 
         if ($this->hasLimit()) {

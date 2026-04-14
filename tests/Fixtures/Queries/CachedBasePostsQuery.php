@@ -5,11 +5,10 @@ namespace Atldays\Sculptor\Tests\Fixtures\Queries;
 use Atldays\Sculptor\Attributes\CacheStore;
 use Atldays\Sculptor\BuilderCachedQuery;
 use Atldays\Sculptor\Concerns\QueryResultCollection;
-use Atldays\Sculptor\Tests\Fixtures\Filters\PublishedFilter;
 use Atldays\Sculptor\Tests\Fixtures\Models\Post;
 
 #[CacheStore('array')]
-class CachedPostsQuery extends BuilderCachedQuery
+class CachedBasePostsQuery extends BuilderCachedQuery
 {
     use QueryResultCollection;
 
@@ -20,9 +19,8 @@ class CachedPostsQuery extends BuilderCachedQuery
     public function __construct()
     {
         $this
-            ->addFilter(new PublishedFilter)
             ->limit(10)
             ->setCacheFor(120)
-            ->setCacheTags('posts', 'published');
+            ->setCacheTags('posts');
     }
 }

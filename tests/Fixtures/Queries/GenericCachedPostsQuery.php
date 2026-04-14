@@ -3,13 +3,13 @@
 namespace Atldays\Sculptor\Tests\Fixtures\Queries;
 
 use Atldays\Sculptor\Attributes\CacheStore;
-use Atldays\Sculptor\BuilderCachedQuery;
+use Atldays\Sculptor\CachedQuery;
 use Atldays\Sculptor\Concerns\QueryResultCollection;
 use Atldays\Sculptor\Tests\Fixtures\Filters\PublishedFilter;
 use Atldays\Sculptor\Tests\Fixtures\Models\Post;
 
 #[CacheStore('array')]
-class CachedPostsQuery extends BuilderCachedQuery
+class GenericCachedPostsQuery extends CachedQuery
 {
     use QueryResultCollection;
 

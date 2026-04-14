@@ -16,5 +16,7 @@ interface WithCache
 
     public function getCache(): Cache;
 
+    public function cacheStore(): string;
+
     public static function flushBaseCache(): bool;
 }
