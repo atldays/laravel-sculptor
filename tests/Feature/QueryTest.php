@@ -7,7 +7,9 @@ use Atldays\Sculptor\Tests\Fixtures\Models\Author;
 use Atldays\Sculptor\Tests\Fixtures\Models\Post;
 use Atldays\Sculptor\Tests\Fixtures\Queries\ArraySelectPostsQuery;
 use Atldays\Sculptor\Tests\Fixtures\Queries\BasePostsQuery;
+use Atldays\Sculptor\Tests\Fixtures\Queries\FilteredPaginatedPostsQuery;
 use Atldays\Sculptor\Tests\Fixtures\Queries\FirstPostQuery;
+use Atldays\Sculptor\Tests\Fixtures\Queries\PaginatedPostsQuery;
 use Atldays\Sculptor\Tests\Fixtures\Queries\PostsQuery;
 use Atldays\Sculptor\Tests\Fixtures\Queries\StringSelectPostsQuery;
 use Atldays\Sculptor\Tests\TestCase;
@@ -120,5 +122,52 @@ class QueryTest extends TestCase
 
         $this->assertCount(2, $result);
         $this->assertTrue($result->every(fn (Post $post) => $post->relationLoaded('author')));
+    }
+
+    public function test_paginated_query_returns_length_aware_paginator(): void
+    {
+        foreach (range(1, 25) as $index) {
+            Post::create(['title' => "Post {$index}", 'published' => true]);
+        }
+
+        $result = PaginatedPostsQuery::make()
+            ->perPage(10)
+            ->page(2)
+            ->effect();
+
+        $this->assertSame(2, $result->currentPage());
+        $this->assertSame(10, $result->perPage());
+        $this->assertCount(10, $result->items());
+        $this->assertSame(25, $result->total());
+    }
+
+    public function test_paginated_query_supports_static_paginate_shortcut(): void
+    {
+        foreach (range(1, 25) as $index) {
+            Post::create(['title' => "Post {$index}", 'published' => true]);
+        }
+
+        $result = PaginatedPostsQuery::paginate(perPage: 10, page: 2);
+
+        $this->assertSame(2, $result->currentPage());
+        $this->assertSame(10, $result->perPage());
+        $this->assertCount(10, $result->items());
+    }
+
+    public function test_paginated_query_shortcut_accepts_constructor_arguments(): void
+    {
+        foreach (range(1, 12) as $index) {
+            Post::create(['title' => "Post {$index}", 'published' => true]);
+        }
+
+        $result = FilteredPaginatedPostsQuery::paginate(
+            perPage: 5,
+            page: 1,
+            minId: 6,
+        );
+
+        $this->assertSame(6, $result->items()[0]->id);
+        $this->assertCount(5, $result->items());
+        $this->assertSame(7, $result->total());
     }
 }

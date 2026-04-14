@@ -7,6 +7,7 @@ use Atldays\Sculptor\Tests\Fixtures\Models\Author;
 use Atldays\Sculptor\Tests\Fixtures\Models\Post;
 use Atldays\Sculptor\Tests\Fixtures\Queries\BrokenBuilderCachedPostsQuery;
 use Atldays\Sculptor\Tests\Fixtures\Queries\CachedBasePostsQuery;
+use Atldays\Sculptor\Tests\Fixtures\Queries\CachedPaginatedPostsQuery;
 use Atldays\Sculptor\Tests\Fixtures\Queries\CachedPostsQuery;
 use Atldays\Sculptor\Tests\Fixtures\Queries\GenericCachedFirstPostQuery;
 use Atldays\Sculptor\Tests\Fixtures\Queries\GenericCachedPostsQuery;
@@ -145,5 +146,40 @@ class CacheQueryTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         BrokenBuilderCachedPostsQuery::make()->query();
+    }
+
+    public function test_cached_paginated_query_caches_pages_independently(): void
+    {
+        foreach (range(1, 25) as $index) {
+            Post::create(['title' => "Post {$index}", 'published' => true]);
+        }
+
+        $firstPage = CachedPaginatedPostsQuery::make()
+            ->perPage(10)
+            ->page(1)
+            ->effect();
+
+        $secondPage = CachedPaginatedPostsQuery::make()
+            ->perPage(10)
+            ->page(2)
+            ->effect();
+
+        Post::query()->delete();
+
+        $cachedFirstPage = CachedPaginatedPostsQuery::make()
+            ->perPage(10)
+            ->page(1)
+            ->effect();
+
+        $cachedSecondPage = CachedPaginatedPostsQuery::make()
+            ->perPage(10)
+            ->page(2)
+            ->effect();
+
+        $this->assertSame(1, $firstPage->firstItem());
+        $this->assertSame(11, $secondPage->firstItem());
+        $this->assertSame(1, $cachedFirstPage->firstItem());
+        $this->assertSame(11, $cachedSecondPage->firstItem());
+        $this->assertNotSame($cachedFirstPage->currentPage(), $cachedSecondPage->currentPage());
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Atldays\Sculptor\Concerns;
 
+use Atldays\Sculptor\Contracts\WithPaginationData;
 use Closure;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use JsonException;
@@ -9,6 +10,9 @@ use ReflectionFunction;
 
 trait InteractsWithResultCache
 {
+    /**
+     * @throws JsonException
+     */
     protected function rememberResult(string $kind, callable $callback): mixed
     {
         return $this->getCache()->remember(
@@ -46,6 +50,7 @@ trait InteractsWithResultCache
             'sql' => $query->toSql(),
             'bindings' => $query->getBindings(),
             'eager_loads' => $this->describeEagerLoads($query->getEagerLoads()),
+            'pagination' => $this instanceof WithPaginationData ? $this->paginationData()->toArray() : null,
         ];
     }
 
