@@ -14,9 +14,7 @@ class FilteredPaginatedPostsQuery extends Query implements WithPaginatedResult
 
     protected string $model = Post::class;
 
-    public function __construct(private readonly int $minId)
-    {
-    }
+    public function __construct(private readonly int $minId) {}
 
     public function query(): Builder
     {

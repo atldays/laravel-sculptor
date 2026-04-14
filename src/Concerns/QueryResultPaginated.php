@@ -9,8 +9,8 @@ use Webmozart\Assert\Assert;
 
 trait QueryResultPaginated
 {
-    use HasResult;
     use HasPagination;
+    use HasResult;
 
     public static function paginate(
         int $perPage = 15,
