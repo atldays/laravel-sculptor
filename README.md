@@ -442,21 +442,16 @@ $posts = PaginatedPostsQuery::make()
     ->effect();
 ```
 
-Or use the static shortcut:
+If your query object also accepts constructor arguments, keep those arguments on `make()` and use the pagination helpers for paginator state:
 
 ```php
-$posts = PaginatedPostsQuery::paginate(perPage: 15, page: 2);
+$posts = ProductsByRegionQuery::make(region: 'eu')
+    ->perPage(15)
+    ->page(2)
+    ->effect();
 ```
 
-If your query object also accepts constructor arguments, pass them as additional named arguments:
-
-```php
-$posts = ProductsByRegionQuery::paginate(
-    perPage: 15,
-    page: 2,
-    region: 'eu',
-);
-```
+When `page()` is not called, Laravel resolves the current page through its paginator resolver, which normally reads the current request query string. When `perPage()` is not called, Eloquent falls back to the model's paginator size through `getPerPage()`.
 
 Pagination also works with `CachedQuery`, and the pagination state is included in the cache key so different pages are cached independently.
 
@@ -671,20 +666,19 @@ Use `BuilderCachedQuery` when:
 
 ## Traits
 
-If you need custom composition, the package also exposes low-level and capability traits:
+If you need custom composition, the package also exposes low-level building blocks:
 
 - `HasQuery`
 - `HasQueryWithFilters`
-- `HasQueryWithCache`
-- `HasQueryWithBuilderCache`
-- `HasQueryWithFiltersAndCache`
-- `HasQueryWithFiltersAndBuilderCache`
 - `HasCache`
+- `InteractsWithResultCache`
+- `InteractsWithBuilderCache`
+- `PreparesCacheableRelations`
 - `HasResult`
 - `QueryResultCollection`
 - `QueryResultFirst`
 
-For most applications, the preset classes are the best starting point.
+For most applications, the preset classes are the best starting point. Compose these traits only when the preset classes do not fit your query object.
 
 ## Testing
 
