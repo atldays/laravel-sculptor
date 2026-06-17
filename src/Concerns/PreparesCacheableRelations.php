@@ -2,7 +2,6 @@
 
 namespace Atldays\Sculptor\Concerns;
 
-use Atldays\QueryCache\Query\Builder as CacheQueryBuilder;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -18,11 +17,7 @@ trait PreparesCacheableRelations
             return $relations;
         }
 
-        $time = $this->cacheFor();
-        $tags = $this->cacheTags();
-        $store = $this->cacheStore();
-
-        return $relations->reduce(function (Collection $relations, string|callable $value, int|string $key) use ($time, $tags, $store) {
+        return $relations->reduce(function (Collection $relations, string|callable $value, int|string $key) {
             $relation = $value;
             $closure = null;
 
@@ -31,9 +26,8 @@ trait PreparesCacheableRelations
                 $closure = $value;
             }
 
-            return $relations->put($relation, function (Builder $query) use ($time, $tags, $store, $closure) {
-                /** @var CacheQueryBuilder&Builder $query */
-                $query->cacheDriver($store)->cacheFor($time)->cacheTags($tags);
+            return $relations->put($relation, function (Builder $query) use ($closure) {
+                $this->applyBuilderCache($query);
 
                 if ($closure) {
                     $closure($query);

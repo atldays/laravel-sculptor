@@ -12,6 +12,8 @@ class Post extends Model
     use Filterable;
     use QueryCacheable;
 
+    protected $perPage = 7;
+
     protected $guarded = [];
 
     protected function casts(): array
@@ -24,5 +26,10 @@ class Post extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(Author::class);
+    }
+
+    public function plainAuthor(): BelongsTo
+    {
+        return $this->belongsTo(PlainAuthor::class, 'author_id');
     }
 }

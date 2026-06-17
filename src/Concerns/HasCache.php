@@ -2,9 +2,12 @@
 
 namespace Atldays\Sculptor\Concerns;
 
-use Atldays\Sculptor\Attributes\Helpers\CacheAttributeProvider;
+use Atldays\Sculptor\Attributes\Contracts\CacheStoreAttribute;
+use Atldays\Sculptor\Attributes\DefaultCacheStore;
+use Atldays\Sculptor\Attributes\Helpers\AttributeReader;
 use DateTime;
 use Illuminate\Contracts\Cache\Repository as CacheContract;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Stringable;
 
@@ -27,7 +30,14 @@ trait HasCache
      */
     public static function cache(): CacheContract
     {
-        return CacheAttributeProvider::resolve(static::class);
+        return Cache::store(static::resolveCacheStore());
+    }
+
+    private static function resolveCacheStore(): string
+    {
+        $attribute = AttributeReader::make(static::class)->get(CacheStoreAttribute::class) ?: new DefaultCacheStore;
+
+        return $attribute->store();
     }
 
     /**
@@ -94,7 +104,7 @@ trait HasCache
 
     final public function cacheStore(): string
     {
-        return CacheAttributeProvider::make(static::class)->store();
+        return static::resolveCacheStore();
     }
 
     final public function getCache(): CacheContract
