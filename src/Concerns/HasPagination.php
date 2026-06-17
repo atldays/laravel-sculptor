@@ -6,7 +6,7 @@ use Atldays\Sculptor\Data\PaginationData;
 
 trait HasPagination
 {
-    private int $perPage = 15;
+    private ?int $perPage = null;
 
     private ?int $page = null;
 

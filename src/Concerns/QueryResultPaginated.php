@@ -12,25 +12,6 @@ trait QueryResultPaginated
     use HasPagination;
     use HasResult;
 
-    public static function paginate(
-        int $perPage = 15,
-        ?int $page = null,
-        string $pageName = 'page',
-        string|array $columns = ['*'],
-        mixed ...$arguments,
-    ): LengthAwarePaginator {
-        $query = static::make(...$arguments)
-            ->perPage($perPage)
-            ->pageName($pageName)
-            ->paginationColumns($columns);
-
-        if ($page !== null) {
-            $query->page($page);
-        }
-
-        return $query->effect();
-    }
-
     public function effect(): LengthAwarePaginator
     {
         Assert::true($this instanceof WithPaginatedResult, 'Paginated result support is required to paginate results');

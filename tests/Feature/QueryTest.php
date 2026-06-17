@@ -17,6 +17,7 @@ use Atldays\Sculptor\Tests\Fixtures\Queries\PaginatedPostsQuery;
 use Atldays\Sculptor\Tests\Fixtures\Queries\PostsQuery;
 use Atldays\Sculptor\Tests\Fixtures\Queries\StringSelectPostsQuery;
 use Atldays\Sculptor\Tests\TestCase;
+use Illuminate\Pagination\Paginator;
 use Webmozart\Assert\InvalidArgumentException;
 
 class QueryTest extends TestCase
@@ -244,30 +245,50 @@ class QueryTest extends TestCase
         $this->assertSame(25, $result->total());
     }
 
-    public function test_paginated_query_supports_static_paginate_shortcut(): void
+    public function test_paginated_query_uses_model_per_page_when_not_overridden(): void
     {
         foreach (range(1, 25) as $index) {
             Post::create(['title' => "Post {$index}", 'published' => true]);
         }
 
-        $result = PaginatedPostsQuery::paginate(perPage: 10, page: 2);
+        $result = PaginatedPostsQuery::make()->effect();
+
+        $this->assertSame(1, $result->currentPage());
+        $this->assertSame(7, $result->perPage());
+        $this->assertCount(7, $result->items());
+    }
+
+    public function test_paginated_query_uses_laravel_current_page_resolver_when_page_is_not_overridden(): void
+    {
+        foreach (range(1, 25) as $index) {
+            Post::create(['title' => "Post {$index}", 'published' => true]);
+        }
+
+        Paginator::currentPageResolver(fn (string $pageName = 'page') => $pageName === 'page' ? 2 : 1);
+
+        try {
+            $result = PaginatedPostsQuery::make()
+                ->perPage(10)
+                ->effect();
+        } finally {
+            Paginator::currentPageResolver(fn () => 1);
+        }
 
         $this->assertSame(2, $result->currentPage());
         $this->assertSame(10, $result->perPage());
         $this->assertCount(10, $result->items());
     }
 
-    public function test_paginated_query_shortcut_accepts_constructor_arguments(): void
+    public function test_paginated_query_accepts_constructor_arguments_with_runtime_pagination(): void
     {
         foreach (range(1, 12) as $index) {
             Post::create(['title' => "Post {$index}", 'published' => true]);
         }
 
-        $result = FilteredPaginatedPostsQuery::paginate(
-            perPage: 5,
-            page: 1,
-            minId: 6,
-        );
+        $result = FilteredPaginatedPostsQuery::make(minId: 6)
+            ->perPage(5)
+            ->page(1)
+            ->effect();
 
         $this->assertSame(6, $result->items()[0]->id);
         $this->assertCount(5, $result->items());
