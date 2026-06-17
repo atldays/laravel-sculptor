@@ -67,21 +67,18 @@ These classes are the recommended entry points for day-to-day use. Lower-level t
 namespace App\Queries\Post;
 
 use App\Models\Post;
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\Attributes\Limit;
+use Atldays\Sculptor\Attributes\WithRelations;
 use Atldays\Sculptor\Concerns\QueryResultCollection;
 use Atldays\Sculptor\Query;
 
+#[ForModel(Post::class)]
+#[WithRelations(['author'])]
+#[Limit(10)]
 class PublishedPostsQuery extends Query
 {
     use QueryResultCollection;
-
-    protected string $model = Post::class;
-
-    protected array $with = ['author'];
-
-    public function __construct()
-    {
-        $this->limit(10);
-    }
 }
 ```
 
@@ -102,23 +99,66 @@ $posts = PublishedPostsQuery::make()
 
 ## Query Building
 
-Every query object starts with a model:
+Every query object starts with a model. The recommended way to declare static query defaults is with class-level PHP attributes:
 
 ```php
-protected string $model = Post::class;
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\Attributes\Limit;
+use Atldays\Sculptor\Attributes\Select;
+use Atldays\Sculptor\Attributes\WithRelations;
+
+#[ForModel(Post::class)]
+#[Select(['posts.id', 'posts.title', 'posts.author_id'])]
+#[WithRelations(['author'])]
+#[Limit(20)]
+class PostIndexQuery extends Query
+{
+    use QueryResultCollection;
+}
 ```
 
 Sculptor supports:
 
 - default `select(table.*)`
 - custom `select`
-- eager loading through `$with`
+- eager loading through relations
 - overriding eager loads at runtime
 - limiting result size
 
-Example:
+Runtime helpers:
+
+- `withSelect(string|array $columns)`
+- `select()`
+- `withRelations(string|array|Collection $relations)`
+- `relations()`
+- `withoutRelations()`
+- `resetRelations()`
+- `limit(int $limit)`
+- `hasLimit()`
+- `withoutLimit()`
+- `model()`
+- `newModel()`
+
+The existing extension points keep their precedence:
+
+- runtime helpers such as `withSelect()`, `withRelations()`, and `limit()` override static defaults
+- class properties such as `$model`, `$select`, and `$with` override attributes
+- overriding `model()`, `select()`, `relations()`, or `query()` gives the query class full control
+- `withoutLimit()` disables both a runtime limit and a `#[Limit]` default for that query instance
+
+### Alternative Property Configuration
+
+Properties remain fully supported for existing query objects and for teams that prefer PHP class state over attributes:
 
 ```php
+<?php
+
+namespace App\Queries\Post;
+
+use App\Models\Post;
+use Atldays\Sculptor\Concerns\QueryResultCollection;
+use Atldays\Sculptor\Query;
+
 class PostIndexQuery extends Query
 {
     use QueryResultCollection;
@@ -144,27 +184,13 @@ class PostIndexQuery extends Query
 }
 ```
 
-Runtime helpers:
-
-- `withSelect(string|array $columns)`
-- `select()`
-- `withRelations(string|array|Collection $relations)`
-- `relations()`
-- `withoutRelations()`
-- `resetRelations()`
-- `limit(int $limit)`
-- `hasLimit()`
-- `withoutLimit()`
-- `model()`
-- `newModel()`
-
 ## Where To Put Query Logic
 
 The main value of Sculptor is not simple one-line queries. It is the ability to move large, reusable read logic into dedicated classes.
 
 As a rule of thumb:
 
-- use class properties such as `$model`, `$select`, and `$with` for static query structure
+- use attributes such as `#[ForModel]`, `#[Select]`, `#[WithRelations]`, and `#[Limit]` for static query structure
 - use the constructor for runtime configuration such as filters, limits, cache tags, or arguments passed into the query object
 - override `query()` when the query requires joins, subqueries, conditional clauses, aggregates, raw expressions, or other larger composition
 
@@ -176,24 +202,24 @@ For complex queries, start from the base implementation and then extend it:
 namespace App\Queries\Order;
 
 use App\Models\Order;
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\Attributes\Limit;
+use Atldays\Sculptor\Attributes\WithRelations;
 use Atldays\Sculptor\Concerns\QueryResultCollection;
 use Atldays\Sculptor\Query;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 
+#[ForModel(Order::class)]
+#[WithRelations(['customer'])]
+#[Limit(100)]
 class OrdersReportQuery extends Query
 {
     use QueryResultCollection;
 
-    protected string $model = Order::class;
-
-    protected array $with = ['customer'];
-
     public function __construct(
         protected readonly ?int $customerId = null,
         protected readonly bool $onlyPaid = true,
-    ) {
-        $this->limit(100);
-    }
+    ) {}
 
     public function query(): Builder
     {
@@ -223,7 +249,7 @@ class OrdersReportQuery extends Query
 
 This is the recommended pattern for larger query objects:
 
-- keep reusable defaults in properties
+- keep reusable defaults in attributes
 - keep runtime input in the constructor
 - keep heavy SQL composition in `query()`
 - return the final Eloquent builder from `query()`
@@ -239,25 +265,26 @@ namespace App\Queries\Product;
 
 use App\Models\Product;
 use Atldays\Sculptor\Attributes\CacheStore;
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\Attributes\Limit;
+use Atldays\Sculptor\Attributes\WithRelations;
 use Atldays\Sculptor\CachedQuery;
 use Atldays\Sculptor\Concerns\QueryResultCollection;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 
 #[CacheStore('redis')]
+#[ForModel(Product::class)]
+#[WithRelations(['brand', 'categories'])]
+#[Limit(20)]
 class TrendingProductsQuery extends CachedQuery
 {
     use QueryResultCollection;
-
-    protected string $model = Product::class;
-
-    protected array $with = ['brand', 'categories'];
 
     public function __construct(
         protected readonly string $region,
         protected readonly int $days = 7,
     ) {
         $this
-            ->limit(20)
             ->setCacheFor(600)
             ->setCacheTags('products', "region:{$this->region}", "days:{$this->days}");
     }
@@ -299,20 +326,20 @@ namespace App\Queries\Post;
 
 use App\Models\Post;
 use App\QueryFilters\PublishedFilter;
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\Attributes\Limit;
 use Atldays\Sculptor\Concerns\QueryResultCollection;
 use Atldays\Sculptor\Query;
 
+#[ForModel(Post::class)]
+#[Limit(10)]
 class PublishedPostsQuery extends Query
 {
     use QueryResultCollection;
 
-    protected string $model = Post::class;
-
     public function __construct()
     {
-        $this
-            ->addFilter(new PublishedFilter())
-            ->limit(10);
+        $this->addFilter(new PublishedFilter());
     }
 }
 ```
@@ -321,7 +348,7 @@ If you do not want filter integration, use `BaseQuery`.
 
 ## Result Execution
 
-Sculptor provides two execution helpers:
+Sculptor provides three execution helpers:
 
 - `QueryResultCollection` for `get()`
 - `QueryResultFirst` for `first()`
@@ -330,27 +357,28 @@ Sculptor provides two execution helpers:
 ### Collection Result
 
 ```php
+use App\Models\User;
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\Attributes\Limit;
+
+#[ForModel(User::class)]
+#[Limit(25)]
 class UsersQuery extends Query
 {
     use QueryResultCollection;
-
-    protected string $model = User::class;
-
-    public function __construct()
-    {
-        $this->limit(25);
-    }
 }
 ```
 
 ### First Result
 
 ```php
+use App\Models\User;
+use Atldays\Sculptor\Attributes\ForModel;
+
+#[ForModel(User::class)]
 class FirstUserQuery extends Query
 {
     use QueryResultFirst;
-
-    protected string $model = User::class;
 }
 ```
 
@@ -387,14 +415,14 @@ Example:
 namespace App\Queries\Post;
 
 use App\Models\Post;
+use Atldays\Sculptor\Attributes\ForModel;
 use Atldays\Sculptor\Concerns\QueryResultPaginated;
 use Atldays\Sculptor\Query;
 
+#[ForModel(Post::class)]
 class PaginatedPostsQuery extends Query
 {
     use QueryResultPaginated;
-
-    protected string $model = Post::class;
 }
 ```
 
@@ -451,22 +479,23 @@ namespace App\Queries\Post;
 
 use App\Models\Post;
 use Atldays\Sculptor\Attributes\CacheStore;
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\Attributes\Limit;
+use Atldays\Sculptor\Attributes\WithRelations;
 use Atldays\Sculptor\CachedQuery;
 use Atldays\Sculptor\Concerns\QueryResultCollection;
 
 #[CacheStore('array')]
+#[ForModel(Post::class)]
+#[WithRelations(['author'])]
+#[Limit(10)]
 class CachedPublishedPostsQuery extends CachedQuery
 {
     use QueryResultCollection;
 
-    protected string $model = Post::class;
-
-    protected array $with = ['author'];
-
     public function __construct()
     {
         $this
-            ->limit(10)
             ->setCacheFor(300)
             ->setCacheTags('posts', 'published');
     }
@@ -488,22 +517,23 @@ namespace App\Queries\Post;
 
 use App\Models\Post;
 use Atldays\Sculptor\Attributes\CacheStore;
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\Attributes\Limit;
+use Atldays\Sculptor\Attributes\WithRelations;
 use Atldays\Sculptor\BuilderCachedQuery;
 use Atldays\Sculptor\Concerns\QueryResultCollection;
 
 #[CacheStore('redis')]
+#[ForModel(Post::class)]
+#[WithRelations(['author'])]
+#[Limit(10)]
 class BuilderCachedPostsQuery extends BuilderCachedQuery
 {
     use QueryResultCollection;
 
-    protected string $model = Post::class;
-
-    protected array $with = ['author'];
-
     public function __construct()
     {
         $this
-            ->limit(10)
             ->setCacheFor(300)
             ->setCacheTags('posts');
     }
@@ -538,19 +568,20 @@ For example, when a query depends on constructor arguments such as tenant, statu
 namespace App\Queries\Post;
 
 use App\Models\Post;
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\Attributes\Limit;
 use Atldays\Sculptor\CachedQuery;
 use Atldays\Sculptor\Concerns\QueryResultCollection;
 
+#[ForModel(Post::class)]
+#[Limit(10)]
 class PaginatedPublishedPostsQuery extends CachedQuery
 {
     use QueryResultCollection;
 
-    protected string $model = Post::class;
-
     public function __construct(public readonly string $region)
     {
         $this
-            ->limit(10)
             ->setCacheFor(300)
             ->setCacheTags('posts', "region:{$this->region}");
     }

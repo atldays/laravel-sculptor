@@ -2,6 +2,8 @@
 
 namespace Atldays\Sculptor\Concerns;
 
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\Attributes\Helpers\AttributeReader;
 use Illuminate\Database\Eloquent\Model;
 use Webmozart\Assert\Assert;
 
@@ -17,9 +19,22 @@ trait HasModel
      */
     public function model(): string
     {
-        Assert::propertyExists($this, 'model');
+        if (property_exists($this, 'model')) {
+            return $this->model;
+        }
 
-        return $this->model;
+        $attribute = AttributeReader::make($this)->get(ForModel::class);
+
+        if ($attribute instanceof ForModel) {
+            /** @var class-string<TModel> $model */
+            $model = $attribute->model();
+
+            return $model;
+        }
+        Assert::notNull(null, sprintf(
+            'Expected the property "model" or [%s] attribute to exist.',
+            ForModel::class,
+        ));
     }
 
     /**
