@@ -9,6 +9,7 @@ use Atldays\Sculptor\Tests\Fixtures\Queries\BrokenBuilderCachedPostsQuery;
 use Atldays\Sculptor\Tests\Fixtures\Queries\CachedBasePostsQuery;
 use Atldays\Sculptor\Tests\Fixtures\Queries\CachedPaginatedPostsQuery;
 use Atldays\Sculptor\Tests\Fixtures\Queries\CachedPostsQuery;
+use Atldays\Sculptor\Tests\Fixtures\Queries\CachedPostsWithPlainAuthorQuery;
 use Atldays\Sculptor\Tests\Fixtures\Queries\GenericCachedFirstPostQuery;
 use Atldays\Sculptor\Tests\Fixtures\Queries\GenericCachedPostsQuery;
 use Atldays\Sculptor\Tests\Fixtures\Queries\InspectableCachedPostsQuery;
@@ -146,6 +147,17 @@ class CacheQueryTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         BrokenBuilderCachedPostsQuery::make()->query();
+    }
+
+    public function test_builder_cached_query_fails_when_relation_builder_is_not_query_cacheable(): void
+    {
+        $author = Author::create(['name' => 'Jane']);
+
+        Post::create(['author_id' => $author->id, 'title' => 'Visible', 'published' => true]);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        CachedPostsWithPlainAuthorQuery::result();
     }
 
     public function test_cached_paginated_query_caches_pages_independently(): void
