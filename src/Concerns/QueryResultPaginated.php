@@ -5,6 +5,7 @@ namespace Atldays\Sculptor\Concerns;
 use Atldays\Sculptor\Contracts\WithPaginatedResult;
 use Atldays\Sculptor\Contracts\WithResultCache;
 use Atldays\Sculptor\Data\PaginationData;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Webmozart\Assert\Assert;
@@ -28,7 +29,7 @@ trait QueryResultPaginated
             columns: $configured->columns,
         );
 
-        $execute = fn () => $query->paginate(
+        $execute = fn (Builder $query) => $query->paginate(
             $resolved->perPage,
             $resolved->columns,
             $resolved->pageName,
@@ -39,9 +40,9 @@ trait QueryResultPaginated
             return $this->rememberResult('paginate', $execute, [
                 'pagination' => $resolved->toArray(),
                 'pagination_path' => Paginator::resolveCurrentPath(),
-            ]);
+            ], $query);
         }
 
-        return $execute();
+        return $execute($query);
     }
 }

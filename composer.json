@@ -42,19 +42,19 @@
     "require": {
         "php": "^8.2",
         "atldays/laravel-eloquent-filters": "^2.1",
-        "atldays/laravel-eloquent-query-cache": "^1.1",
-        "illuminate/cache": "^12.0|^13.0",
-        "illuminate/contracts": "^12.0|^13.0",
-        "illuminate/database": "^12.0|^13.0",
-        "illuminate/support": "^12.0|^13.0",
+        "atldays/laravel-eloquent-query-cache": "^2.0",
+        "illuminate/cache": "^12.72|^13.42",
+        "illuminate/contracts": "^12.72|^13.42",
+        "illuminate/database": "^12.72|^13.42",
+        "illuminate/support": "^12.72|^13.42",
         "spatie/laravel-package-tools": "^1.93.3",
         "webmozart/assert": "^2.5"
     },
     "require-dev": {
         "laravel/pint": "^1.29.3",
         "mockery/mockery": "^1.6.15",
-        "orchestra/testbench": "^10.12|^11.3",
-        "phpunit/phpunit": "^11.5.50|^12.5.8|^13.0"
+        "orchestra/testbench": "^11.3",
+        "phpunit/phpunit": "^13.4.7"
     },
     "scripts": {
         "format": "vendor/bin/pint",

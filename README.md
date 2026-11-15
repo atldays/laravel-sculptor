@@ -46,7 +46,7 @@ php artisan vendor:publish --tag=sculptor-config
 ## Requirements
 
 - PHP `^8.2`
-- Laravel `^12.0|^13.0` (Laravel 13 requires PHP `^8.3`)
+- Laravel `^12.72|^13.42` (Laravel 13 requires PHP `^8.3`)
 
 ## Core Classes
 
@@ -348,11 +348,19 @@ If you do not want filter integration, use `BaseQuery`.
 
 ## Result Execution
 
-Sculptor provides three execution helpers:
+Choose one result trait for each query class:
 
-- `QueryResultCollection` for `get()`
-- `QueryResultFirst` for `first()`
-- `QueryResultPaginated` for `paginate()`
+| Trait | Laravel operation | Result |
+| --- | --- | --- |
+| `QueryResultCollection` | `get()` with a required positive limit | Eloquent collection |
+| `QueryResultAll` | `get()` with an optional limit | Eloquent collection |
+| `QueryResultFirst` | `first()` | Model or `null` |
+| `QueryResultFirstOrFail` | `firstOrFail()` | Model, or `ModelNotFoundException` |
+| `QueryResultExists` | `exists()` | `bool` |
+| `QueryResultCount` | `count()` | `int` |
+| `QueryResultPaginated` | `paginate()` | Length-aware paginator |
+
+All result traits work with `Query`, `CachedQuery`, and `BuilderCachedQuery`, and preserve Laravel's operation semantics. Existence checks and counts execute native scalar queries without hydrating models or eager loading relations.
 
 ### Collection Result
 
@@ -382,6 +390,61 @@ class FirstUserQuery extends Query
 }
 ```
 
+### Collection Without a Required Limit
+
+```php
+use App\Models\User;
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\Concerns\QueryResultAll;
+use Atldays\Sculptor\Query;
+
+#[ForModel(User::class)]
+class AllUsersQuery extends Query
+{
+    use QueryResultAll;
+}
+
+$users = AllUsersQuery::result();
+$firstTen = AllUsersQuery::make()->limit(10)->effect();
+```
+
+`QueryResultAll` respects limits from `#[Limit]`, `limit()`, and custom `query()` implementations. Use `withoutLimit()` to disable a Sculptor attribute or runtime limit.
+
+### Required Model and Scalar Results
+
+```php
+use App\Models\User;
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\CachedQuery;
+use Atldays\Sculptor\Concerns\QueryResultCount;
+use Atldays\Sculptor\Concerns\QueryResultExists;
+use Atldays\Sculptor\Concerns\QueryResultFirstOrFail;
+
+#[ForModel(User::class)]
+class RequiredUserQuery extends CachedQuery
+{
+    use QueryResultFirstOrFail;
+}
+
+#[ForModel(User::class)]
+class UsersExistQuery extends CachedQuery
+{
+    use QueryResultExists;
+}
+
+#[ForModel(User::class)]
+class UserCountQuery extends CachedQuery
+{
+    use QueryResultCount;
+}
+
+$user = RequiredUserQuery::result();
+$exists = UsersExistQuery::result();
+$count = UserCountQuery::result();
+```
+
+Add conditions through filters or `query()` as with other query objects. `QueryResultFirstOrFail` preserves Laravel's `ModelNotFoundException`, including the model class. `CachedQuery` does not store thrown exceptions. `BuilderCachedQuery` may cache the underlying empty selection, so subsequent calls still throw until that entry expires or is invalidated.
+
 ### Execution API
 
 - `::make(...$arguments)` resolves the query object through the container
@@ -391,6 +454,8 @@ class FirstUserQuery extends Query
 ### Query Execution Event
 
 Every `::result()` call dispatches `Atldays\Sculptor\Events\ResultExecuted`.
+
+This includes cache hits and calls that throw an exception. Calling `->effect()` directly does not dispatch this event.
 
 The event contains:
 
@@ -564,6 +629,12 @@ This setting applies to that query instance and preserves its configured cache d
 
 A zero or negative duration passed to `setCacheFor()` also disables cache reads and writes. Setting a positive duration restores caching when `withoutCache()` is not active. Existing entries remain available until they expire or are invalidated.
 
+Both cache strategies support every result trait, including cached `false`, `0`, and empty collections. Result-cache keys include the result operation as well as the query shape.
+
+Queries with `lockForUpdate()`, `sharedLock()`, or a custom string lock bypass cache reads and writes. This also applies when a global scope or a `beforeQuery` callback adds the lock. Explicit `useWritePdo()` queries bypass the result cache as well. Existing entries are preserved. For database locks to cover subsequent work, execute the query inside the appropriate Laravel transaction.
+
+`CachedQuery` uses one prepared builder for its cache key and execution. Global scopes and before-query callbacks run once per execution, including cache hits, so they can affect both the key and the decision to bypass caching.
+
 The base cache tag contains the fully qualified query class name, for example `sculptor:App\Queries\Post\CachedPublishedPostsQuery`. Query classes with the same short name in different namespaces have independent base tags. Entries written with the previous short-name tag format remain under their original TTL and are no longer read by the updated query class.
 
 ### Custom Cache Tags
@@ -693,7 +764,12 @@ If you need custom composition, the package also exposes low-level building bloc
 - `PreparesCacheableRelations`
 - `HasResult`
 - `QueryResultCollection`
+- `QueryResultAll`
 - `QueryResultFirst`
+- `QueryResultFirstOrFail`
+- `QueryResultExists`
+- `QueryResultCount`
+- `QueryResultPaginated`
 
 For most applications, the preset classes are the best starting point. Compose these traits only when the preset classes do not fit your query object.
 

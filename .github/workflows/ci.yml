@@ -48,41 +48,31 @@ jobs:
         run: composer format:test
 
   tests:
-    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }} / ${{ matrix.prefer }}
     runs-on: ubuntu-24.04
 
     strategy:
       fail-fast: false
       matrix:
-        include:
+        php: ["8.2", "8.3", "8.4", "8.5"]
+        laravel: ["^12.72", "^13.42"]
+        prefer: [prefer-lowest, prefer-stable]
+        exclude:
           - php: "8.2"
-            laravel: "^12.0"
+            laravel: "^13.42"
+        include:
+          - laravel: "^12.72"
             testbench: "^10.12"
+          - laravel: "^13.42"
+            testbench: "^11.3"
+          - php: "8.2"
             phpunit: "^11.5.50"
           - php: "8.3"
-            laravel: "^12.0"
-            testbench: "^10.12"
             phpunit: "^12.5.8"
           - php: "8.4"
-            laravel: "^12.0"
-            testbench: "^10.12"
-            phpunit: "^13.0"
+            phpunit: "^13.4.7"
           - php: "8.5"
-            laravel: "^12.0"
-            testbench: "^10.12"
-            phpunit: "^13.0"
-          - php: "8.3"
-            laravel: "^13.0"
-            testbench: "^11.3"
-            phpunit: "^12.5.8"
-          - php: "8.4"
-            laravel: "^13.0"
-            testbench: "^11.3"
-            phpunit: "^13.0"
-          - php: "8.5"
-            laravel: "^13.0"
-            testbench: "^11.3"
-            phpunit: "^13.0"
+            phpunit: "^13.4.7"
 
     steps:
       - name: Checkout
@@ -100,12 +90,13 @@ jobs:
           path: |
             ~/.composer/cache/files
             ~/.cache/composer/files
-          key: ${{ runner.os }}-php-${{ matrix.php }}-laravel-${{ matrix.laravel }}-${{ hashFiles('composer.json') }}
+          key: ${{ runner.os }}-php-${{ matrix.php }}-laravel-${{ matrix.laravel }}-${{ matrix.prefer }}-${{ hashFiles('composer.json') }}
           restore-keys: |
             ${{ runner.os }}-php-${{ matrix.php }}-laravel-${{ matrix.laravel }}-
             ${{ runner.os }}-php-${{ matrix.php }}-
 
       - name: Pin framework test dependencies
+        # Compatibility jobs override the development stack to exercise every supported runtime.
         run: |
           composer require --dev --no-update \
             "laravel/framework:${{ matrix.laravel }}" \
@@ -113,7 +104,7 @@ jobs:
             "phpunit/phpunit:${{ matrix.phpunit }}"
 
       - name: Install matrix dependencies
-        run: composer update --prefer-dist --no-interaction --with-all-dependencies
+        run: composer update --${{ matrix.prefer }} --prefer-dist --no-interaction --with-all-dependencies
 
       - name: Validate Composer configuration
         run: composer validate --strict

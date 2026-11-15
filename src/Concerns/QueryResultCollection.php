@@ -5,6 +5,7 @@ namespace Atldays\Sculptor\Concerns;
 use Atldays\Sculptor\Contracts\WithLimit;
 use Atldays\Sculptor\Contracts\WithQuery;
 use Atldays\Sculptor\Contracts\WithResultCache;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Webmozart\Assert\Assert;
@@ -31,7 +32,7 @@ trait QueryResultCollection
         Assert::true($this->hasLimit(), 'Limit is required to fetch collection');
 
         if ($this instanceof WithResultCache) {
-            return $this->rememberResult('collection', fn () => $this->query()->get());
+            return $this->rememberResult('collection', fn (Builder $query) => $query->get());
         }
 
         return $this->query()->get();

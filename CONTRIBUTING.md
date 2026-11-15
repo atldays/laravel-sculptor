@@ -84,6 +84,10 @@ Recommended commit types:
 
 ## Testing
 
+The default development stack requires PHP `8.4.1+` and uses Testbench `^11.3`, Laravel 13, and PHPUnit `^13.4.7`.
+
+CI also validates package compatibility with Laravel 12 and PHP 8.2/8.3. Those jobs temporarily override the development dependencies: Testbench 10 for Laravel 12, PHPUnit 11 for PHP 8.2, and PHPUnit 12 for PHP 8.3. The package's runtime requirements are listed separately in `composer.json`.
+
 Every change should be covered by tests when it affects behavior.
 
 At minimum, contributors should run:
