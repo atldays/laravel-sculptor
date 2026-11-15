@@ -46,7 +46,7 @@ php artisan vendor:publish --tag=sculptor-config
 ## Requirements
 
 - PHP `^8.2`
-- Laravel `^10.0|^11.0|^12.0|^13.0`
+- Laravel `^12.0|^13.0` (Laravel 13 requires PHP `^8.3`)
 
 ## Core Classes
 

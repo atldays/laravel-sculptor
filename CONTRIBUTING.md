@@ -91,6 +91,7 @@ At minimum, contributors should run:
 ```bash
 composer format:test
 composer test
+composer audit
 ```
 
 This package is tested across multiple Laravel and PHP versions in CI, so local changes should avoid assumptions tied to only one framework version.
