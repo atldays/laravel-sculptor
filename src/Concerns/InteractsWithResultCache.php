@@ -3,6 +3,7 @@
 namespace Atldays\Sculptor\Concerns;
 
 use Atldays\Sculptor\Contracts\WithPaginationData;
+use Atldays\Sculptor\Support\CachedNull;
 use Closure;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use JsonException;
@@ -25,11 +26,13 @@ trait InteractsWithResultCache
             return $callback($query);
         }
 
-        return $this->getCache()->remember(
+        $result = $this->getCache()->remember(
             $this->cacheKey($kind, $context, $query),
             $cacheFor,
-            fn () => $callback($query)
+            fn () => $callback($query) ?? CachedNull::Value
         );
+
+        return $result === CachedNull::Value ? null : $result;
     }
 
     private function prepareResultCacheQuery(Builder $query): Builder

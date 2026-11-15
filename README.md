@@ -358,6 +358,9 @@ Choose one result trait for each query class:
 | `QueryResultFirstOrFail` | `firstOrFail()` | Model, or `ModelNotFoundException` |
 | `QueryResultExists` | `exists()` | `bool` |
 | `QueryResultCount` | `count()` | `int` |
+| `QueryResultValue` | `value($column)` | Column value or `null` |
+| `QueryResultPluck` | `pluck($column, $key)` | Support collection of values |
+| `QueryResultAggregate` | `sum`, `avg`, `min`, or `max` | Native scalar value or `null` |
 | `QueryResultPaginated` | `paginate()` | Length-aware paginator |
 
 All result traits work with `Query`, `CachedQuery`, and `BuilderCachedQuery`, and preserve Laravel's operation semantics. Existence checks and counts execute native scalar queries without hydrating models or eager loading relations.
@@ -444,6 +447,73 @@ $count = UserCountQuery::result();
 ```
 
 Add conditions through filters or `query()` as with other query objects. `QueryResultFirstOrFail` preserves Laravel's `ModelNotFoundException`, including the model class. `CachedQuery` does not store thrown exceptions. `BuilderCachedQuery` may cache the underlying empty selection, so subsequent calls still throw until that entry expires or is invalidated.
+
+### Column Values, Pluck, and Aggregates
+
+Use `#[ResultColumn]` to configure the result column for these three traits. `#[PluckKey]` optionally provides collection keys, and `#[Aggregate]` specifies the aggregate function:
+
+```php
+use App\Models\Product;
+use Atldays\Sculptor\Attributes\Aggregate;
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\Attributes\PluckKey;
+use Atldays\Sculptor\Attributes\ResultColumn;
+use Atldays\Sculptor\CachedQuery;
+use Atldays\Sculptor\Concerns\QueryResultAggregate;
+use Atldays\Sculptor\Concerns\QueryResultPluck;
+use Atldays\Sculptor\Concerns\QueryResultValue;
+use Atldays\Sculptor\Enums\AggregateFunction;
+use Atldays\Sculptor\Query;
+
+#[ForModel(Product::class)]
+#[ResultColumn('products.price')]
+class FirstProductPriceQuery extends Query
+{
+    use QueryResultValue;
+}
+
+#[ForModel(Product::class)]
+#[ResultColumn('products.name')]
+#[PluckKey('products.id')]
+class ProductNamesQuery extends CachedQuery
+{
+    use QueryResultPluck;
+}
+
+#[ForModel(Product::class)]
+#[ResultColumn('products.price')]
+#[Aggregate(AggregateFunction::Sum)]
+class TotalProductPriceQuery extends CachedQuery
+{
+    use QueryResultAggregate;
+}
+
+$price = FirstProductPriceQuery::result();
+$namesById = ProductNamesQuery::result();
+$total = TotalProductPriceQuery::result();
+
+$names = ProductNamesQuery::make()->withPluckKey(null)->limit(20)->effect();
+$average = TotalProductPriceQuery::make()->withAggregateFunction('avg')->effect();
+$largestId = TotalProductPriceQuery::make()
+    ->withResultColumn('products.id')
+    ->withAggregateFunction(AggregateFunction::Max)
+    ->effect();
+```
+
+The attributes are inherited. Runtime overrides take precedence and apply to that instance:
+
+- `withResultColumn(string|Expression $column)` overrides the column.
+- `withPluckKey(string|Expression|null $key)` overrides the collection key; `null` explicitly disables an attribute-defined key.
+- `withAggregateFunction(AggregateFunction|string $function)` accepts `sum`, `avg`, `min`, or `max`, case-insensitively.
+- `resultColumn()`, `pluckKey()`, and `aggregateFunction()` return the effective configuration.
+
+The result column is required. `QueryResultAggregate` also requires a function. Missing settings, blank column/key strings, and unsupported function names throw `InvalidArgumentException`.
+
+For `Value` and `Pluck`, the result column and key define the effective `SELECT`, including when a query has `#[Select]`, `withSelect()`, or custom selections. Filters, joins, ordering, and limits remain in effect. Eager loading is disabled for these projections. Eloquent casts, accessors, and date conversion retain native Laravel behavior. Expressions and aliases follow the installed Laravel version's semantics.
+
+Aggregates preserve Laravel's selection, `distinct`, grouping, `having`, and limit semantics. A grouped aggregate returns Laravel's scalar result. Results keep the database driver's types: exact decimal strings are preserved, with no additional conversion to `float`. Empty sums return Laravel's zero; empty averages, minima, and maxima return `null`.
+
+All three traits support both cache strategies. Keys include the result column, optional pluck key, and aggregate function, so runtime overrides produce independent entries. `CachedQuery` caches `null` as a result, including a missing first record or a nullable column; it remains cached until expiration or invalidation. The existing cache bypass, tags, locking rules, and execution events apply to these traits as well.
 
 ### Execution API
 
@@ -769,6 +839,9 @@ If you need custom composition, the package also exposes low-level building bloc
 - `QueryResultFirstOrFail`
 - `QueryResultExists`
 - `QueryResultCount`
+- `QueryResultValue`
+- `QueryResultPluck`
+- `QueryResultAggregate`
 - `QueryResultPaginated`
 
 For most applications, the preset classes are the best starting point. Compose these traits only when the preset classes do not fit your query object.

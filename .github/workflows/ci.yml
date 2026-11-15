@@ -63,16 +63,14 @@ jobs:
         include:
           - laravel: "^12.72"
             testbench: "^10.12"
+            phpunit: "^12.5.44"
           - laravel: "^13.42"
             testbench: "^11.3"
+            phpunit: "^13.4.7"
           - php: "8.2"
-            phpunit: "^11.5.50"
+            phpunit: "^11.5.58"
           - php: "8.3"
-            phpunit: "^12.5.8"
-          - php: "8.4"
-            phpunit: "^13.4.7"
-          - php: "8.5"
-            phpunit: "^13.4.7"
+            phpunit: "^12.5.44"
 
     steps:
       - name: Checkout
@@ -114,3 +112,61 @@ jobs:
 
       - name: Run tests
         run: composer test
+
+  postgres:
+    name: PostgreSQL 17 / Laravel ${{ matrix.laravel }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - laravel: "^12.72"
+            testbench: "^10.12"
+            phpunit: "^12.5.44"
+          - laravel: "^13.42"
+            testbench: "^11.3"
+            phpunit: "^13.4.7"
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: sculptor_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U postgres -d sculptor_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          extensions: pdo_sqlite, pdo_pgsql
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: |
+          composer require --dev --no-update "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "phpunit/phpunit:${{ matrix.phpunit }}"
+          composer update --prefer-dist --no-interaction --with-all-dependencies
+
+      - name: Audit dependencies
+        run: composer audit --locked --abandoned=fail
+
+      - name: Run PostgreSQL projection tests
+        env:
+          SCULPTOR_PGSQL_HOST: 127.0.0.1
+          SCULPTOR_PGSQL_PORT: ${{ job.services.postgres.ports['5432'] }}
+          SCULPTOR_PGSQL_DATABASE: sculptor_test
+          SCULPTOR_PGSQL_USER: postgres
+          SCULPTOR_PGSQL_PASSWORD: postgres
+        run: vendor/bin/phpunit --no-coverage --group postgres --fail-on-skipped --fail-on-empty-test-suite
