@@ -11,26 +11,38 @@ use ReflectionFunction;
 trait InteractsWithResultCache
 {
     /**
+     * @param  array<string, mixed>  $context
+     *
      * @throws JsonException
      */
-    protected function rememberResult(string $kind, callable $callback): mixed
+    protected function rememberResult(string $kind, callable $callback, array $context = []): mixed
     {
+        $cacheFor = $this->cacheFor();
+
+        if (is_int($cacheFor) && $cacheFor <= 0) {
+            return $callback();
+        }
+
         return $this->getCache()->remember(
-            $this->cacheKey($kind),
-            $this->cacheFor(),
+            $this->cacheKey($kind, $context),
+            $cacheFor,
             $callback
         );
     }
 
     /**
+     * @param  array<string, mixed>  $context
+     *
      * @throws JsonException
      */
-    protected function cacheKey(string $kind): string
+    protected function cacheKey(string $kind, array $context = []): string
     {
+        $payload = array_replace($this->cachePayload($kind), $context);
+
         return sprintf(
             '%s:%s',
             static::class,
-            sha1(json_encode($this->cachePayload($kind), JSON_THROW_ON_ERROR))
+            sha1(json_encode($payload, JSON_THROW_ON_ERROR))
         );
     }
 

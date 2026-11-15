@@ -8,7 +8,6 @@ use Atldays\Sculptor\Attributes\Helpers\AttributeReader;
 use DateTime;
 use Illuminate\Contracts\Cache\Repository as CacheContract;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 use Stringable;
 
 trait HasCache
@@ -18,6 +17,8 @@ trait HasCache
      * that specifies how long to cache the query.
      */
     private int|DateTime $cacheFor = 3600;
+
+    private bool $cacheDisabled = false;
 
     /**
      * The tags for the query cache. Can be useful
@@ -45,7 +46,7 @@ trait HasCache
      */
     public static function cacheBaseTag(): string
     {
-        return Str::snake(class_basename(static::class));
+        return 'sculptor:'.static::class;
     }
 
     public static function flushBaseCache(): bool
@@ -59,6 +60,16 @@ trait HasCache
     public function setCacheFor(int|DateTime $time): static
     {
         $this->cacheFor = $time;
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function withoutCache(bool $withoutCache = true): static
+    {
+        $this->cacheDisabled = $withoutCache;
 
         return $this;
     }
@@ -85,13 +96,15 @@ trait HasCache
 
     public function cacheFor(): DateTime|int
     {
-        if ($this->cacheFor instanceof DateTime) {
-            return $this->cacheFor;
-        } elseif (is_int($this->cacheFor) && $this->cacheFor > 0) {
-            return new DateTime("+$this->cacheFor seconds");
+        if ($this->cacheDisabled) {
+            return 0;
         }
 
-        return new DateTime('+1 hour');
+        if ($this->cacheFor instanceof DateTime || $this->cacheFor <= 0) {
+            return $this->cacheFor;
+        }
+
+        return new DateTime("+$this->cacheFor seconds");
     }
 
     /**

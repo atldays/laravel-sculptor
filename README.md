@@ -453,7 +453,7 @@ $posts = ProductsByRegionQuery::make(region: 'eu')
 
 When `page()` is not called, Laravel resolves the current page through its paginator resolver, which normally reads the current request query string. When `perPage()` is not called, Eloquent falls back to the model's paginator size through `getPerPage()`.
 
-Pagination also works with `CachedQuery`, and the pagination state is included in the cache key so different pages are cached independently.
+Pagination also works with `CachedQuery`. The resolved current page, effective page size, page name, columns, and base URL for pagination links are included in the cache key. Different pages and URLs are cached independently, including when Laravel resolves the page from the current request. Resolving request defaults does not change the query object's pagination settings.
 
 Use the dedicated pagination methods for page state. Constructor arguments should represent business input such as tenant, region, status, or date range, not paginator state.
 
@@ -542,6 +542,7 @@ If the model is not configured for the query-cache package, this mode fails inte
 Available cache helpers:
 
 - `setCacheFor(int|DateTime $time)`
+- `withoutCache(bool $withoutCache = true)`
 - `setCacheTags(string ...$tags)`
 - `mergeCacheTags(string ...$tags)`
 - `cacheTags()`
@@ -550,6 +551,20 @@ Available cache helpers:
 - `cacheStore()`
 - `getCache()`
 - `flushBaseCache()`
+
+Cache durations are measured in seconds and default to one hour. To execute a query without reading or writing cache entries, use `withoutCache()`. This also bypasses eager loaded relation caches in `BuilderCachedQuery`:
+
+```php
+$posts = CachedPublishedPostsQuery::make()
+    ->withoutCache()
+    ->effect();
+```
+
+This setting applies to that query instance and preserves its configured cache duration and existing entries. Call `withoutCache(false)` to restore caching for the instance. Changing the duration with `setCacheFor()` does not clear the explicit bypass setting.
+
+A zero or negative duration passed to `setCacheFor()` also disables cache reads and writes. Setting a positive duration restores caching when `withoutCache()` is not active. Existing entries remain available until they expire or are invalidated.
+
+The base cache tag contains the fully qualified query class name, for example `sculptor:App\Queries\Post\CachedPublishedPostsQuery`. Query classes with the same short name in different namespaces have independent base tags. Entries written with the previous short-name tag format remain under their original TTL and are no longer read by the updated query class.
 
 ### Custom Cache Tags
 
@@ -637,6 +652,8 @@ Or through Artisan:
 ```bash
 php artisan sculptor:flush-cache "App\\Queries\\Post\\CachedPublishedPostsQuery"
 ```
+
+The command returns exit code `0` when the cache is flushed successfully and `1` when the query class is invalid or the cache store fails to flush.
 
 ## Choosing the Right Class
 

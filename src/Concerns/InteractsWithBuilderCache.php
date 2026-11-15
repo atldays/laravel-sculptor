@@ -15,10 +15,15 @@ trait InteractsWithBuilderCache
     {
         $this->assertCacheableBuilder($query);
 
-        return $query
-            ->cacheFor($this->cacheFor())
+        $cacheFor = $this->cacheFor();
+
+        $query
             ->cacheTags($this->cacheTags())
             ->cacheDriver($this->cacheStore());
+
+        return is_int($cacheFor) && $cacheFor <= 0
+            ? $query->dontCache()
+            : $query->cacheFor($cacheFor);
     }
 
     private function assertCacheableBuilder(mixed $query): void
