@@ -46,6 +46,7 @@
         "illuminate/cache": "^12.72|^13.42",
         "illuminate/contracts": "^12.72|^13.42",
         "illuminate/database": "^12.72|^13.42",
+        "illuminate/pagination": "^12.72|^13.42",
         "illuminate/support": "^12.72|^13.42",
         "spatie/laravel-package-tools": "^1.93.3",
         "webmozart/assert": "^2.5"

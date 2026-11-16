@@ -13,7 +13,7 @@ trait InteractsWithBuilderCache
      */
     protected function applyBuilderCache(Builder $query): Builder
     {
-        $this->assertCacheableBuilder($query);
+        $baseQuery = $this->cacheableBaseQuery($query);
 
         $cacheFor = $this->cacheFor();
 
@@ -21,25 +21,25 @@ trait InteractsWithBuilderCache
             ->cacheTags($this->cacheTags())
             ->cacheDriver($this->cacheStore());
 
-        return is_int($cacheFor) && $cacheFor <= 0
+        return (is_int($cacheFor) && $cacheFor <= 0) || $baseQuery->useWritePdo
             ? $query->dontCache()
             : $query->cacheFor($cacheFor);
     }
 
-    private function assertCacheableBuilder(mixed $query): void
+    private function cacheableBaseQuery(mixed $query): CacheQueryBuilder
     {
         $baseQuery = method_exists($query, 'getQuery') ? $query->getQuery() : $query;
 
         if ($baseQuery instanceof CacheQueryBuilder) {
-            return;
+            return $baseQuery;
         }
 
         if ($baseQuery !== $query && method_exists($baseQuery, 'getQuery')) {
-            $this->assertCacheableBuilder($baseQuery);
-
-            return;
+            return $this->cacheableBaseQuery($baseQuery);
         }
 
         Assert::isInstanceOf($baseQuery, CacheQueryBuilder::class);
+
+        return $baseQuery;
     }
 }

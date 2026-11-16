@@ -356,12 +356,15 @@ Choose one result trait for each query class:
 | `QueryResultAll` | `get()` with an optional limit | Eloquent collection |
 | `QueryResultFirst` | `first()` | Model or `null` |
 | `QueryResultFirstOrFail` | `firstOrFail()` | Model, or `ModelNotFoundException` |
+| `QueryResultSole` | `sole()` | Exactly one model, or a native Laravel exception |
 | `QueryResultExists` | `exists()` | `bool` |
 | `QueryResultCount` | `count()` | `int` |
 | `QueryResultValue` | `value($column)` | Column value or `null` |
 | `QueryResultPluck` | `pluck($column, $key)` | Support collection of values |
 | `QueryResultAggregate` | `sum`, `avg`, `min`, or `max` | Native scalar value or `null` |
 | `QueryResultPaginated` | `paginate()` | Length-aware paginator |
+| `QueryResultSimplePaginated` | `simplePaginate()` | Paginator without a total count |
+| `QueryResultCursorPaginated` | `cursorPaginate()` | Cursor paginator |
 
 All result traits work with `Query`, `CachedQuery`, and `BuilderCachedQuery`, and preserve Laravel's operation semantics. Existence checks and counts execute native scalar queries without hydrating models or eager loading relations.
 
@@ -446,7 +449,7 @@ $exists = UsersExistQuery::result();
 $count = UserCountQuery::result();
 ```
 
-Add conditions through filters or `query()` as with other query objects. `QueryResultFirstOrFail` preserves Laravel's `ModelNotFoundException`, including the model class. `CachedQuery` does not store thrown exceptions. `BuilderCachedQuery` may cache the underlying empty selection, so subsequent calls still throw until that entry expires or is invalidated.
+Add conditions through filters or `query()` as with other query objects. `QueryResultFirstOrFail` preserves Laravel's `ModelNotFoundException`, including the model class. `QueryResultSole` uses `sole()`: zero rows throw `ModelNotFoundException`, and two or more rows throw `MultipleRecordsFoundException`. It checks up to two rows even if `limit(1)` is configured. `CachedQuery` does not store thrown exceptions. `BuilderCachedQuery` may cache the underlying empty or duplicate selection, so subsequent calls still throw until that entry expires or is invalidated.
 
 ### Column Values, Pluck, and Aggregates
 
@@ -541,6 +544,8 @@ Sculptor treats pagination as a separate result type, just like collections and 
 Use:
 
 - `QueryResultPaginated` for Laravel's `paginate()`
+- `QueryResultSimplePaginated` for `simplePaginate()`, without a total count query
+- `QueryResultCursorPaginated` for `cursorPaginate()`, without offsets or a total count query
 
 Example:
 
@@ -552,14 +557,17 @@ namespace App\Queries\Post;
 use App\Models\Post;
 use Atldays\Sculptor\Attributes\ForModel;
 use Atldays\Sculptor\Concerns\QueryResultPaginated;
+use Atldays\Sculptor\Contracts\WithPaginatedResult;
 use Atldays\Sculptor\Query;
 
 #[ForModel(Post::class)]
-class PaginatedPostsQuery extends Query
+class PaginatedPostsQuery extends Query implements WithPaginatedResult
 {
     use QueryResultPaginated;
 }
 ```
+
+`QueryResultPaginated` and `QueryResultSimplePaginated` require `WithPaginatedResult`.
 
 Runtime pagination helpers:
 
@@ -588,7 +596,39 @@ $posts = ProductsByRegionQuery::make(region: 'eu')
 
 When `page()` is not called, Laravel resolves the current page through its paginator resolver, which normally reads the current request query string. When `perPage()` is not called, Eloquent falls back to the model's paginator size through `getPerPage()`.
 
-Pagination also works with `CachedQuery`. The resolved current page, effective page size, page name, columns, and base URL for pagination links are included in the cache key. Different pages and URLs are cached independently, including when Laravel resolves the page from the current request. Resolving request defaults does not change the query object's pagination settings.
+Pagination also works with `CachedQuery` and `BuilderCachedQuery` (with a `QueryCacheable` model). `CachedQuery` caches the paginator result: the resolved current page, effective page size, page name, columns, and base URL for pagination links are included in its key. Different pages and URLs are cached independently, including when Laravel resolves the page from the current request. Resolving request defaults does not change the query object's pagination settings. `BuilderCachedQuery` caches the underlying SQL results and creates a fresh paginator on each call, including its current link options.
+
+Non-default `paginationColumns()` replaces the query's select list for that execution. The default `['*']` keeps the query's configured select list. This applies to all three pagination traits. Pagination uses Laravel's page-size semantics; `limit()` does not cap a page.
+
+For cursor pagination, implement `WithCursorPaginatedResult`:
+
+```php
+use App\Models\Post;
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\CachedQuery;
+use Atldays\Sculptor\Concerns\QueryResultCursorPaginated;
+use Atldays\Sculptor\Contracts\WithCursorPaginatedResult;
+
+#[ForModel(Post::class)]
+class CursorPostsQuery extends CachedQuery implements WithCursorPaginatedResult
+{
+    use QueryResultCursorPaginated;
+}
+
+$page = CursorPostsQuery::make()
+    ->perPage(15)
+    ->cursorName('posts_cursor')
+    ->cursor($encodedCursor) // Laravel Cursor instance, encoded string, or null
+    ->effect();
+
+$next = $page->nextCursor()?->encode();
+```
+
+When no cursor is configured (or `cursor(null)` is used), Laravel resolves it from the current request using `cursorName()`. Use `cursor('')` to explicitly select the first page. Invalid encoded strings follow Laravel's behavior and select the first page. The cursor's parameters and direction, page size, cursor name, columns, and base URL participate in the result cache key. A cursor object and its encoded string share the same entry. `cursorPaginationData()` exposes configured settings without resolving request defaults.
+
+Use a stable, unique ordering for cursor pagination (for example, a timestamp followed by the primary key). Eloquent orders by the primary key when no ordering is supplied. Include every ordering column in the selected columns. Laravel's restrictions on nullable ordering columns, expressions, and cursor parameters still apply.
+
+Paginator instances returned from result cache are cloned so changing their link options (`appends`, `fragment`, `withPath`) does not alter subsequent cache reads. Items retain the normal model/collection cache semantics. All new results support tags, `withoutCache()`, and non-positive TTL bypass. Locks and write-PDO reads bypass both cache strategies.
 
 Use the dedicated pagination methods for page state. Constructor arguments should represent business input such as tenant, region, status, or date range, not paginator state.
 
@@ -837,12 +877,15 @@ If you need custom composition, the package also exposes low-level building bloc
 - `QueryResultAll`
 - `QueryResultFirst`
 - `QueryResultFirstOrFail`
+- `QueryResultSole`
 - `QueryResultExists`
 - `QueryResultCount`
 - `QueryResultValue`
 - `QueryResultPluck`
 - `QueryResultAggregate`
 - `QueryResultPaginated`
+- `QueryResultSimplePaginated`
+- `QueryResultCursorPaginated`
 
 For most applications, the preset classes are the best starting point. Compose these traits only when the preset classes do not fit your query object.
 

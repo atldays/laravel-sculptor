@@ -29,6 +29,10 @@ trait QueryResultPaginated
             columns: $configured->columns,
         );
 
+        if ($resolved->columns !== ['*']) {
+            $query->select($resolved->columns);
+        }
+
         $execute = fn (Builder $query) => $query->paginate(
             $resolved->perPage,
             $resolved->columns,
@@ -37,7 +41,7 @@ trait QueryResultPaginated
         );
 
         if ($this instanceof WithResultCache) {
-            return $this->rememberResult('paginate', $execute, [
+            return clone $this->rememberResult('paginate', $execute, [
                 'pagination' => $resolved->toArray(),
                 'pagination_path' => Paginator::resolveCurrentPath(),
             ], $query);
