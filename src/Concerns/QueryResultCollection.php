@@ -13,7 +13,7 @@ use Webmozart\Assert\Assert;
  *
  * @template TModel of Model
  *
- * @property $model class-string<TModel>
+ * @property class-string<TModel> $model
  *
  * @extends HasResult<Collection<array-key, TModel>>
  */

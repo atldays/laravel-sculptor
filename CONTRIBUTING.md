@@ -50,7 +50,7 @@ Typical workflow:
 2. Make the smallest meaningful change that solves the problem.
 3. Add or update tests.
 4. Run formatting.
-5. Run the test suite.
+5. Run static analysis and the test suite.
 6. Update documentation when the public API or behavior changes.
 
 ## Commit Style
@@ -94,6 +94,7 @@ At minimum, contributors should run:
 
 ```bash
 composer format:test
+composer analyse
 composer test
 composer audit
 ```
@@ -107,6 +108,12 @@ Run `composer format` to apply both formatting steps, or `composer format:test` 
 Pint uses the Laravel preset configured in `pint.json`, with compact casts (`(int)$value`), spaces around concatenation (`$prefix . $name`), grouped imports, and left-aligned PHPDoc with single-space separators. Named classes with no constructor arguments use `new Example`; anonymous classes retain parentheses. Logical negation has no space after `!`: write `if (!$condition)`.
 
 PHP_CodeSniffer uses only the built-in Slevomat `BlockControlStructureSpacing` rule from `phpcs.xml.dist`. It requires one blank line before and after `if`, `foreach`, `for`, `while`, `do`, `switch`, and `try` blocks when another statement precedes or follows them in the same scope. It does not add padding at the start or end of a scope, or between connected `else`/`elseif` and `catch`/`finally` branches. No custom formatting rules are used.
+
+### Static analysis
+
+Run `composer analyse` on the default development stack (Laravel 13). PHPStan runs at level 9 with a PHP 8.2 target, checking `src` and the query fixtures in `tests/Fixtures/Queries`. Including these consumers lets PHPStan analyse the result traits in concrete classes.
+
+`phpstan-baseline.neon` records the existing diagnostics when static analysis was introduced, including incomplete generic annotations and dynamic builder/cache APIs. The baseline is technical debt, not a declaration that those issues are fixed. New diagnostics fail CI; obsolete baseline entries fail too. Resolve existing diagnostics incrementally and remove their entries. Do not regenerate the baseline to hide new errors.
 
 ### PostgreSQL projection tests
 
