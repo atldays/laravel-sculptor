@@ -12,7 +12,7 @@ use ReflectionFunction;
 trait InteractsWithResultCache
 {
     /**
-     * @param  array<string, mixed>  $context
+     * @param array<string, mixed> $context
      *
      * @throws JsonException
      */
@@ -45,7 +45,7 @@ trait InteractsWithResultCache
     }
 
     /**
-     * @param  array<string, mixed>  $context
+     * @param array<string, mixed> $context
      *
      * @throws JsonException
      */
@@ -82,7 +82,7 @@ trait InteractsWithResultCache
     }
 
     /**
-     * @param  array<string, callable>  $eagerLoads
+     * @param array<string, callable> $eagerLoads
      * @return array<string, array<string, mixed>>
      */
     private function describeEagerLoads(array $eagerLoads): array

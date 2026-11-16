@@ -7,8 +7,7 @@ use Atldays\Sculptor\Tests\Fixtures\Queries\CachedPostsQuery;
 use Atldays\Sculptor\Tests\TestCase;
 use Illuminate\Cache\Repository;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\{Artisan, Cache};
 use Mockery;
 use RuntimeException;
 

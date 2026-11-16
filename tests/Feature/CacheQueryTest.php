@@ -3,21 +3,12 @@
 namespace Atldays\Sculptor\Tests\Feature;
 
 use Atldays\QueryCache\Query\Builder as CacheQueryBuilder;
-use Atldays\Sculptor\Tests\Fixtures\Models\Author;
-use Atldays\Sculptor\Tests\Fixtures\Models\Post;
-use Atldays\Sculptor\Tests\Fixtures\Queries\BrokenBuilderCachedPostsQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\CachedBasePostsQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\CachedPaginatedPostsQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\CachedPostsQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\CachedPostsWithPlainAuthorQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\GenericCachedFirstPostQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\GenericCachedPostsQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\InspectableCachedPostsQuery;
+use Atldays\Sculptor\Tests\Fixtures\Models\{Author, Post};
+use Atldays\Sculptor\Tests\Fixtures\Queries\{BrokenBuilderCachedPostsQuery, CachedBasePostsQuery, CachedPaginatedPostsQuery, CachedPostsQuery, CachedPostsWithPlainAuthorQuery, GenericCachedFirstPostQuery, GenericCachedPostsQuery, InspectableCachedPostsQuery};
 use Atldays\Sculptor\Tests\TestCase;
 use DateTimeInterface;
 use Illuminate\Cache\ArrayStore;
-use Illuminate\Pagination\PaginationState;
-use Illuminate\Pagination\Paginator;
+use Illuminate\Pagination\{PaginationState, Paginator};
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Webmozart\Assert\InvalidArgumentException;

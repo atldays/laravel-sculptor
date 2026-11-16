@@ -2,12 +2,9 @@
 
 namespace Atldays\Sculptor\Tests\Fixtures\Queries;
 
-use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\Attributes\Select;
-use Atldays\Sculptor\Attributes\WithRelations;
+use Atldays\Sculptor\Attributes\{ForModel, Select, WithRelations};
 use Atldays\Sculptor\Query;
-use Atldays\Sculptor\Tests\Fixtures\Models\PlainPost;
-use Atldays\Sculptor\Tests\Fixtures\Models\Post;
+use Atldays\Sculptor\Tests\Fixtures\Models\{PlainPost, Post};
 
 #[ForModel(PlainPost::class)]
 #[Select(['posts.id'])]

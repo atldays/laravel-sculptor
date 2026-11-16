@@ -31,6 +31,7 @@ trait HasModel
 
             return $model;
         }
+
         Assert::notNull(null, sprintf(
             'Expected the property "model" or [%s] attribute to exist.',
             ForModel::class,

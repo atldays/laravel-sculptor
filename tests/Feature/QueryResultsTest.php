@@ -7,9 +7,7 @@ use Atldays\Sculptor\Tests\Fixtures\Filters\PublishedFilter;
 use Atldays\Sculptor\Tests\Fixtures\Queries;
 use Atldays\Sculptor\Tests\TestCase;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\{Cache, DB, Event};
 use PHPUnit\Framework\Attributes\DataProvider;
 
 class QueryResultsTest extends TestCase
@@ -18,7 +16,7 @@ class QueryResultsTest extends TestCase
     {
         foreach (['' => 'plain', 'Cached' => 'result cache', 'BuilderCached' => 'builder cache'] as $prefix => $strategy) {
             foreach (['All' => 'all', 'FirstOrFail' => 'firstOrFail', 'Exists' => 'exists', 'Count' => 'count'] as $name => $kind) {
-                yield $strategy.' '.$kind => [Queries::class.'\\'.$prefix.$name.'PostsQuery', $kind];
+                yield $strategy . ' ' . $kind => [Queries::class . '\\' . $prefix . $name . 'PostsQuery', $kind];
             }
         }
     }
@@ -26,7 +24,7 @@ class QueryResultsTest extends TestCase
     public static function cachedResultQueries(): iterable
     {
         foreach (self::resultQueries() as $name => $arguments) {
-            if (! str_starts_with($name, 'plain ')) {
+            if (!str_starts_with($name, 'plain ')) {
                 yield $name => $arguments;
             }
         }
@@ -76,7 +74,7 @@ class QueryResultsTest extends TestCase
     public function test_all_works_without_limit_and_respects_runtime_limit(string $queryClass): void
     {
         foreach (range(1, 4) as $index) {
-            DB::table('posts')->insert(['title' => 'Post '.$index, 'published' => true]);
+            DB::table('posts')->insert(['title' => 'Post ' . $index, 'published' => true]);
         }
 
         $query = $queryClass::make();
@@ -89,7 +87,7 @@ class QueryResultsTest extends TestCase
     public function test_all_respects_attribute_limit_and_explicitly_disabling_it(): void
     {
         foreach (range(1, 4) as $index) {
-            DB::table('posts')->insert(['title' => 'Post '.$index, 'published' => true]);
+            DB::table('posts')->insert(['title' => 'Post ' . $index, 'published' => true]);
         }
 
         $query = Queries\AttributeAllPostsQuery::make();

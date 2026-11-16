@@ -9,8 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use PHPUnit\Framework\Attributes\DataProviderExternal;
-use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\{DataProviderExternal, Group};
 
 #[Group('postgres')]
 class PostgresProjectionResultsTest extends TestCase
@@ -21,7 +20,7 @@ class PostgresProjectionResultsTest extends TestCase
     {
         parent::setUp();
 
-        if (! getenv('SCULPTOR_PGSQL_DATABASE')) {
+        if (!getenv('SCULPTOR_PGSQL_DATABASE')) {
             $this->markTestSkipped('Set SCULPTOR_PGSQL_DATABASE to run PostgreSQL projection tests.');
         }
 
@@ -33,7 +32,7 @@ class PostgresProjectionResultsTest extends TestCase
             'username' => getenv('SCULPTOR_PGSQL_USER') ?: 'postgres',
             'password' => getenv('SCULPTOR_PGSQL_PASSWORD') ?: '',
             'charset' => 'utf8',
-            'prefix' => 'sculptor_'.bin2hex(random_bytes(6)).'_',
+            'prefix' => 'sculptor_' . bin2hex(random_bytes(6)) . '_',
         ]);
         DB::setDefaultConnection('projection_pgsql');
         $this->postgresConfigured = true;
@@ -61,6 +60,7 @@ class PostgresProjectionResultsTest extends TestCase
                 DB::setDefaultConnection('testing');
                 DB::purge('projection_pgsql');
             }
+
             parent::tearDown();
         }
     }
@@ -78,10 +78,12 @@ class PostgresProjectionResultsTest extends TestCase
         $this->assertIsString($kind === 'Pluck' ? $expected[1] : $expected);
         DB::enableQueryLog();
         DB::flushQueryLog();
+
         for ($i = 0; $i < 2; $i++) {
             $result = $query->effect();
             $this->assertSame($expected, $result instanceof Collection ? $result->all() : $result);
         }
+
         $this->assertCount(method_exists($query, 'getCache') ? 1 : 2, DB::getQueryLog());
     }
 
@@ -89,6 +91,7 @@ class PostgresProjectionResultsTest extends TestCase
     public function test_every_numeric_aggregate_and_nullable_result_preserves_native_type(string $class): void
     {
         $query = $class::make()->withResultColumn('posts.amount');
+
         foreach (AggregateFunction::cases() as $function) {
             $expected = DB::table('posts')->{$function->value}('amount');
             $this->assertIsString($expected);

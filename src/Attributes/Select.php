@@ -8,7 +8,7 @@ use Attribute;
 readonly class Select
 {
     /**
-     * @param  string|list<string>  $columns
+     * @param string|list<string> $columns
      */
     public function __construct(protected string|array $columns) {}
 

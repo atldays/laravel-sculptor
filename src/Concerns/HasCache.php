@@ -46,7 +46,7 @@ trait HasCache
      */
     public static function cacheBaseTag(): string
     {
-        return 'sculptor:'.static::class;
+        return 'sculptor:' . static::class;
     }
 
     public static function flushBaseCache(): bool

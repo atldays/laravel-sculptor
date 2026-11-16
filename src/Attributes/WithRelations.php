@@ -8,7 +8,7 @@ use Attribute;
 readonly class WithRelations
 {
     /**
-     * @param  string|list<string>  $relations
+     * @param string|list<string> $relations
      */
     public function __construct(protected string|array $relations) {}
 

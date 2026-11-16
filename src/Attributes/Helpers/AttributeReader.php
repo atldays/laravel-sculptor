@@ -22,7 +22,7 @@ readonly class AttributeReader
     /**
      * @template TAttribute of object
      *
-     * @param  class-string<TAttribute>  $attribute
+     * @param class-string<TAttribute> $attribute
      * @return TAttribute|null
      */
     public function get(string $attribute): ?object

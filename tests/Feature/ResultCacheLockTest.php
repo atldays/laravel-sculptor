@@ -5,8 +5,7 @@ namespace Atldays\Sculptor\Tests\Feature;
 use Atldays\Sculptor\CachedQuery;
 use Atldays\Sculptor\Concerns\QueryResultAll;
 use Atldays\Sculptor\Tests\Fixtures\Models\PlainPost;
-use Atldays\Sculptor\Tests\Fixtures\Queries\CachedPaginatedPostsQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\GenericCachedFirstPostQuery;
+use Atldays\Sculptor\Tests\Fixtures\Queries\{CachedPaginatedPostsQuery, GenericCachedFirstPostQuery};
 use Atldays\Sculptor\Tests\TestCase;
 use Closure;
 use Illuminate\Contracts\Database\Eloquent\Builder;
@@ -21,7 +20,7 @@ class ResultCacheLockTest extends TestCase
     {
         foreach (['update' => true, 'shared' => false, 'custom' => 'for update'] as $name => $lock) {
             foreach (['query', 'scope', 'callback'] as $stage) {
-                yield $name.' '.$stage => [$lock, $stage];
+                yield $name . ' ' . $stage => [$lock, $stage];
             }
         }
     }
@@ -120,7 +119,7 @@ class ResultCacheLockTest extends TestCase
         DB::table('posts')->insert(['title' => 'Original', 'published' => true]);
 
         $queries = [
-            new class extends GenericCachedFirstPostQuery
+            new class() extends GenericCachedFirstPostQuery
             {
                 public int $queryBuilds = 0;
 
@@ -131,7 +130,7 @@ class ResultCacheLockTest extends TestCase
                     return parent::query()->beforeQuery(fn (QueryBuilder $query) => $query->lockForUpdate());
                 }
             },
-            new class extends CachedPaginatedPostsQuery
+            new class() extends CachedPaginatedPostsQuery
             {
                 public int $queryBuilds = 0;
 

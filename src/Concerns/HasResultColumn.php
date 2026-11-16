@@ -28,7 +28,7 @@ trait HasResultColumn
     }
 
     /**
-     * @param  list<string|Expression>  $columns
+     * @param list<string|Expression> $columns
      */
     protected function resultProjectionQuery(array $columns): Builder
     {

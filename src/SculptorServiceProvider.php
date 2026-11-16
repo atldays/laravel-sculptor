@@ -3,8 +3,7 @@
 namespace Atldays\Sculptor;
 
 use Atldays\Sculptor\Console\Commands\FlushCacheCommand;
-use Spatie\LaravelPackageTools\Package;
-use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Spatie\LaravelPackageTools\{Package, PackageServiceProvider};
 
 class SculptorServiceProvider extends PackageServiceProvider
 {

@@ -55,15 +55,25 @@
         "laravel/pint": "^1.29.3",
         "mockery/mockery": "^1.6.15",
         "orchestra/testbench": "^11.3",
-        "phpunit/phpunit": "^13.4.7"
+        "phpunit/phpunit": "^13.4.7",
+        "slevomat/coding-standard": "^8.31.3"
     },
     "scripts": {
-        "format": "vendor/bin/pint",
-        "format:test": "vendor/bin/pint --test",
+        "format": [
+            "vendor/bin/pint",
+            "vendor/bin/phpcbf"
+        ],
+        "format:test": [
+            "vendor/bin/pint --test",
+            "vendor/bin/phpcs"
+        ],
         "test": "vendor/bin/phpunit --no-coverage"
     },
     "config": {
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
     },
     "suggest": {
         "barryvdh/laravel-debugbar": "For debugging"

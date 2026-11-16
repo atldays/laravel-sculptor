@@ -2,14 +2,11 @@
 
 namespace Atldays\Sculptor\Concerns;
 
-use Atldays\Sculptor\Contracts\WithCursorPaginatedResult;
-use Atldays\Sculptor\Contracts\WithResultCache;
+use Atldays\Sculptor\Contracts\{WithCursorPaginatedResult, WithResultCache};
 use Atldays\Sculptor\Data\CursorPaginationData;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Contracts\Pagination\CursorPaginator;
-use Illuminate\Pagination\Cursor;
-use Illuminate\Pagination\CursorPaginator as CursorResolver;
-use Illuminate\Pagination\Paginator;
+use Illuminate\Pagination\{Cursor, CursorPaginator as CursorResolver, Paginator};
 use Webmozart\Assert\Assert;
 
 trait QueryResultCursorPaginated

@@ -6,8 +6,7 @@ use Atldays\Sculptor\Tests\Fixtures\Filters\CallbackFilter;
 use Atldays\Sculptor\Tests\Fixtures\Queries;
 use Atldays\Sculptor\Tests\TestCase;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Pagination\CursorPaginator;
-use Illuminate\Pagination\Paginator;
+use Illuminate\Pagination\{CursorPaginator, Paginator};
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\DataProvider;
 
@@ -19,8 +18,9 @@ class PaginationResultsTest extends TestCase
         Paginator::currentPageResolver(fn () => 1);
         CursorPaginator::currentCursorResolver(fn () => null);
         Paginator::currentPathResolver(fn () => 'https://example.test/posts');
+
         foreach (range(1, 5) as $id) {
-            DB::table('posts')->insert(['title' => 'post '.$id, 'published' => $id % 2 === 1]);
+            DB::table('posts')->insert(['title' => 'post ' . $id, 'published' => $id % 2 === 1]);
         }
     }
 
@@ -31,6 +31,7 @@ class PaginationResultsTest extends TestCase
                 yield $name => [$class, $kind];
             }
         }
+
         yield 'plain length-aware' => [Queries\PaginatedPostsQuery::class, 'Paginated'];
         yield 'cached length-aware' => [Queries\CachedPaginatedPostsQuery::class, 'Paginated'];
     }
@@ -56,7 +57,7 @@ class PaginationResultsTest extends TestCase
     public static function cachedQueries(): iterable
     {
         foreach (self::queries() as $name => $arguments) {
-            if (! str_starts_with($name, 'plain ')) {
+            if (!str_starts_with($name, 'plain ')) {
                 yield $name => $arguments;
             }
         }
@@ -72,6 +73,7 @@ class PaginationResultsTest extends TestCase
         $this->assertNull($first->previousPageUrl());
         $this->assertNotNull($first->nextPageUrl());
         $this->assertCount($kind === 'Paginated' ? 2 : 1, DB::getQueryLog());
+
         if ($kind !== 'Paginated') {
             $this->assertStringNotContainsString('count(', strtolower(DB::getQueryLog()[0]['query']));
         }
@@ -91,6 +93,7 @@ class PaginationResultsTest extends TestCase
             : $query->page(2)->effect();
         $this->assertSame([3, 4], $this->ids($back));
         $this->assertSame($second->nextPageUrl(), $back->nextPageUrl());
+
         if ($kind === 'CursorPaginated') {
             foreach (DB::getQueryLog() as $sql) {
                 $this->assertStringNotContainsString('offset', strtolower($sql['query']));

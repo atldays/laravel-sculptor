@@ -3,19 +3,8 @@
 namespace Atldays\Sculptor\Tests\Feature;
 
 use Atldays\Sculptor\Tests\Fixtures\Filters\PublishedFilter;
-use Atldays\Sculptor\Tests\Fixtures\Models\Author;
-use Atldays\Sculptor\Tests\Fixtures\Models\Post;
-use Atldays\Sculptor\Tests\Fixtures\Queries\ArraySelectPostsQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\AttributePostsQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\AttributePropertyDefaultsPostsQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\AttributeStringSelectPostsQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\BasePostsQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\FilteredPaginatedPostsQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\FirstPostQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\InheritedAttributePostsQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\PaginatedPostsQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\PostsQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\StringSelectPostsQuery;
+use Atldays\Sculptor\Tests\Fixtures\Models\{Author, Post};
+use Atldays\Sculptor\Tests\Fixtures\Queries\{ArraySelectPostsQuery, AttributePostsQuery, AttributePropertyDefaultsPostsQuery, AttributeStringSelectPostsQuery, BasePostsQuery, FilteredPaginatedPostsQuery, FirstPostQuery, InheritedAttributePostsQuery, PaginatedPostsQuery, PostsQuery, StringSelectPostsQuery};
 use Atldays\Sculptor\Tests\TestCase;
 use Illuminate\Pagination\Paginator;
 use Webmozart\Assert\InvalidArgumentException;

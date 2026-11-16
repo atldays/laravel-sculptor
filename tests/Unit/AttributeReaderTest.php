@@ -4,9 +4,7 @@ namespace Atldays\Sculptor\Tests\Unit;
 
 use Atldays\Sculptor\Attributes\Helpers\AttributeReader;
 use Atldays\Sculptor\Attributes\Select;
-use Atldays\Sculptor\Tests\Fixtures\Queries\AttributePostsQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\InheritedAttributePostsQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\PostsQuery;
+use Atldays\Sculptor\Tests\Fixtures\Queries\{AttributePostsQuery, InheritedAttributePostsQuery, PostsQuery};
 use Atldays\Sculptor\Tests\TestCase;
 
 class AttributeReaderTest extends TestCase

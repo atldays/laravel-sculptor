@@ -100,6 +100,14 @@ composer audit
 
 This package is tested across multiple Laravel and PHP versions in CI, so local changes should avoid assumptions tied to only one framework version.
 
+### Code style
+
+Run `composer format` to apply both formatting steps, or `composer format:test` to check them without modifying files. CI runs the same check.
+
+Pint uses the Laravel preset configured in `pint.json`, with compact casts (`(int)$value`), spaces around concatenation (`$prefix . $name`), grouped imports, and left-aligned PHPDoc with single-space separators. Named classes with no constructor arguments use `new Example`; anonymous classes retain parentheses. Logical negation has no space after `!`: write `if (!$condition)`.
+
+PHP_CodeSniffer uses only the built-in Slevomat `BlockControlStructureSpacing` rule from `phpcs.xml.dist`. It requires one blank line before and after `if`, `foreach`, `for`, `while`, `do`, `switch`, and `try` blocks when another statement precedes or follows them in the same scope. It does not add padding at the start or end of a scope, or between connected `else`/`elseif` and `catch`/`finally` branches. No custom formatting rules are used.
+
 ### PostgreSQL projection tests
 
 The regular test run skips the `postgres` group unless `SCULPTOR_PGSQL_DATABASE` is set. These tests verify exact `NUMERIC`/`DECIMAL` values and native nullable aggregate types through plain queries and both cache strategies. They require `pdo_sqlite` and `pdo_pgsql` and create and drop uniquely prefixed tables in the configured test database.
