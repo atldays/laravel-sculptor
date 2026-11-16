@@ -7,14 +7,17 @@ on:
       - develop
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   pint:
     name: Pint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -23,7 +26,7 @@ jobs:
           coverage: none
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.composer/cache/files
@@ -35,41 +38,43 @@ jobs:
       - name: Install dependencies
         run: composer update --prefer-dist --no-interaction
 
+      - name: Validate Composer configuration
+        run: composer validate --strict
+
+      - name: Audit dependencies
+        run: composer audit
+
       - name: Check formatting
         run: composer format:test
 
   tests:
-    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}
-    runs-on: ubuntu-latest
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }} / ${{ matrix.prefer }}
+    runs-on: ubuntu-24.04
 
     strategy:
       fail-fast: false
       matrix:
-        include:
+        php: ["8.2", "8.3", "8.4", "8.5"]
+        laravel: ["^12.72", "^13.42"]
+        prefer: [prefer-lowest, prefer-stable]
+        exclude:
           - php: "8.2"
-            laravel: "^12.0"
-            testbench: "^10.0"
-            phpunit: "^11.0|^12.0"
+            laravel: "^13.42"
+        include:
+          - laravel: "^12.72"
+            testbench: "^10.12"
+            phpunit: "^12.5.44"
+          - laravel: "^13.42"
+            testbench: "^11.3"
+            phpunit: "^13.4.7"
+          - php: "8.2"
+            phpunit: "^11.5.58"
           - php: "8.3"
-            laravel: "^12.0"
-            testbench: "^10.0"
-            phpunit: "^11.0|^12.0"
-          - php: "8.3"
-            laravel: "^13.0"
-            testbench: "11.x-dev@dev"
-            phpunit: "^12.5"
-          - php: "8.4"
-            laravel: "^13.0"
-            testbench: "11.x-dev@dev"
-            phpunit: "^12.5"
-          - php: "8.5"
-            laravel: "^13.0"
-            testbench: "11.x-dev@dev"
-            phpunit: "^12.5"
+            phpunit: "^12.5.44"
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -78,17 +83,18 @@ jobs:
           coverage: none
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.composer/cache/files
             ~/.cache/composer/files
-          key: ${{ runner.os }}-php-${{ matrix.php }}-laravel-${{ matrix.laravel }}-${{ hashFiles('composer.json') }}
+          key: ${{ runner.os }}-php-${{ matrix.php }}-laravel-${{ matrix.laravel }}-${{ matrix.prefer }}-${{ hashFiles('composer.json') }}
           restore-keys: |
             ${{ runner.os }}-php-${{ matrix.php }}-laravel-${{ matrix.laravel }}-
             ${{ runner.os }}-php-${{ matrix.php }}-
 
       - name: Pin framework test dependencies
+        # Compatibility jobs override the development stack to exercise every supported runtime.
         run: |
           composer require --dev --no-update \
             "laravel/framework:${{ matrix.laravel }}" \
@@ -96,7 +102,71 @@ jobs:
             "phpunit/phpunit:${{ matrix.phpunit }}"
 
       - name: Install matrix dependencies
-        run: composer update --prefer-dist --no-interaction --with-all-dependencies
+        run: composer update --${{ matrix.prefer }} --prefer-dist --no-interaction --with-all-dependencies
+
+      - name: Validate Composer configuration
+        run: composer validate --strict
+
+      - name: Audit dependencies
+        run: composer audit
 
       - name: Run tests
         run: composer test
+
+  postgres:
+    name: PostgreSQL 17 / Laravel ${{ matrix.laravel }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - laravel: "^12.72"
+            testbench: "^10.12"
+            phpunit: "^12.5.44"
+          - laravel: "^13.42"
+            testbench: "^11.3"
+            phpunit: "^13.4.7"
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: sculptor_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U postgres -d sculptor_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          extensions: pdo_sqlite, pdo_pgsql
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: |
+          composer require --dev --no-update "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "phpunit/phpunit:${{ matrix.phpunit }}"
+          composer update --prefer-dist --no-interaction --with-all-dependencies
+
+      - name: Audit dependencies
+        run: composer audit --locked --abandoned=fail
+
+      - name: Run PostgreSQL projection tests
+        env:
+          SCULPTOR_PGSQL_HOST: 127.0.0.1
+          SCULPTOR_PGSQL_PORT: ${{ job.services.postgres.ports['5432'] }}
+          SCULPTOR_PGSQL_DATABASE: sculptor_test
+          SCULPTOR_PGSQL_USER: postgres
+          SCULPTOR_PGSQL_PASSWORD: postgres
+        run: vendor/bin/phpunit --no-coverage --group postgres --fail-on-skipped --fail-on-empty-test-suite

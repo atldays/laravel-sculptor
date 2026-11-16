@@ -28,7 +28,7 @@ class FlushCacheCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle(): void
+    public function handle(): int
     {
         try {
             $class = $this->argument('class');
@@ -37,11 +37,15 @@ class FlushCacheCommand extends Command
             Assert::implementsInterface($class, WithCache::class);
 
             /** @var WithCache $class */
-            $class::flushBaseCache();
+            Assert::true($class::flushBaseCache(), sprintf('Failed to flush cache for class "%s".', $class));
 
             $this->components->info(sprintf('Cache flushed successfully for class "%s"', $class));
+
+            return self::SUCCESS;
         } catch (Throwable $e) {
             $this->error($e->getMessage());
+
+            return self::FAILURE;
         }
     }
 }

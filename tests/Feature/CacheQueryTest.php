@@ -16,6 +16,10 @@ use Atldays\Sculptor\Tests\Fixtures\Queries\InspectableCachedPostsQuery;
 use Atldays\Sculptor\Tests\TestCase;
 use DateTimeInterface;
 use Illuminate\Cache\ArrayStore;
+use Illuminate\Pagination\PaginationState;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Webmozart\Assert\InvalidArgumentException;
 
 class CacheQueryTest extends TestCase
@@ -26,7 +30,7 @@ class CacheQueryTest extends TestCase
 
         $this->assertInstanceOf(CacheQueryBuilder::class, $builder);
         $this->assertInstanceOf(ArrayStore::class, $builder->getCacheDriver()->getStore());
-        $this->assertSame(['posts', 'published', 'cached_posts_query'], $builder->getCacheTags());
+        $this->assertSame(['posts', 'published', CachedPostsQuery::cacheBaseTag()], $builder->getCacheTags());
         $this->assertInstanceOf(DateTimeInterface::class, $builder->getCacheFor());
     }
 
@@ -44,7 +48,7 @@ class CacheQueryTest extends TestCase
         $relationBuilder = $relationQuery->getQuery();
 
         $this->assertInstanceOf(ArrayStore::class, $relationBuilder->getCacheDriver()->getStore());
-        $this->assertSame(['posts', 'published', 'cached_posts_query'], $relationBuilder->getCacheTags());
+        $this->assertSame(['posts', 'published', CachedPostsQuery::cacheBaseTag()], $relationBuilder->getCacheTags());
         $this->assertInstanceOf(DateTimeInterface::class, $relationBuilder->getCacheFor());
     }
 
@@ -67,7 +71,7 @@ class CacheQueryTest extends TestCase
         $builder = CachedBasePostsQuery::make()->query()->getQuery();
 
         $this->assertInstanceOf(CacheQueryBuilder::class, $builder);
-        $this->assertSame(['posts', 'cached_base_posts_query'], $builder->getCacheTags());
+        $this->assertSame(['posts', CachedBasePostsQuery::cacheBaseTag()], $builder->getCacheTags());
         $this->assertInstanceOf(ArrayStore::class, $builder->getCacheDriver()->getStore());
     }
 
@@ -120,6 +124,118 @@ class CacheQueryTest extends TestCase
 
         $this->assertSame('Visible', $first->sole()->title);
         $this->assertSame('Updated', $second->sole()->title);
+    }
+
+    /**
+     * @return array<string, array{int}>
+     */
+    public static function nonPositiveCacheDurations(): array
+    {
+        return ['zero' => [0], 'negative' => [-1]];
+    }
+
+    #[DataProvider('nonPositiveCacheDurations')]
+    public function test_non_positive_duration_bypasses_result_cache_reads_and_writes(int $duration): void
+    {
+        $post = Post::create(['title' => 'Original', 'published' => true]);
+        $query = (new GenericCachedPostsQuery)->withoutRelations();
+
+        $this->assertSame('Original', $query->effect()->sole()->title);
+
+        DB::table('posts')->where('id', $post->id)->update(['title' => 'Updated']);
+
+        $query->setCacheFor($duration);
+
+        $this->assertSame('Updated', $query->effect()->sole()->title);
+
+        DB::table('posts')->where('id', $post->id)->update(['title' => 'Latest']);
+
+        $this->assertSame('Latest', $query->effect()->sole()->title);
+        $this->assertSame('Original', $query->setCacheFor(120)->effect()->sole()->title);
+    }
+
+    #[DataProvider('nonPositiveCacheDurations')]
+    public function test_non_positive_duration_bypasses_builder_and_relation_cache_reads_and_writes(int $duration): void
+    {
+        $author = Author::create(['name' => 'Original author']);
+        $post = Post::create(['author_id' => $author->id, 'title' => 'Original', 'published' => true]);
+        $query = new CachedPostsQuery;
+
+        $cached = $query->effect()->sole();
+
+        $this->assertSame('Original', $cached->title);
+        $this->assertSame('Original author', $cached->author->name);
+
+        DB::table('posts')->where('id', $post->id)->update(['title' => 'Updated']);
+        DB::table('authors')->where('id', $author->id)->update(['name' => 'Updated author']);
+
+        $fresh = $query->setCacheFor($duration)->effect()->sole();
+
+        $this->assertSame('Updated', $fresh->title);
+        $this->assertSame('Updated author', $fresh->author->name);
+
+        DB::table('posts')->where('id', $post->id)->update(['title' => 'Latest']);
+        DB::table('authors')->where('id', $author->id)->update(['name' => 'Latest author']);
+
+        $latest = $query->effect()->sole();
+
+        $this->assertSame('Latest', $latest->title);
+        $this->assertSame('Latest author', $latest->author->name);
+
+        $cachedAgain = $query->setCacheFor(120)->effect()->sole();
+
+        $this->assertSame('Original', $cachedAgain->title);
+        $this->assertSame('Original author', $cachedAgain->author->name);
+    }
+
+    /**
+     * @return array<string, array{class-string<GenericCachedPostsQuery|CachedPostsQuery>}>
+     */
+    public static function cacheQueryClasses(): array
+    {
+        return [
+            'result cache' => [GenericCachedPostsQuery::class],
+            'builder cache' => [CachedPostsQuery::class],
+        ];
+    }
+
+    #[DataProvider('cacheQueryClasses')]
+    public function test_without_cache_bypasses_reads_and_writes_for_one_instance(string $queryClass): void
+    {
+        $author = Author::create(['name' => 'Original author']);
+        $post = Post::create(['author_id' => $author->id, 'title' => 'Original', 'published' => true]);
+        $query = new $queryClass;
+
+        $cached = $query->effect()->sole();
+
+        $this->assertSame('Original', $cached->title);
+        $this->assertSame('Original author', $cached->author->name);
+
+        DB::table('posts')->where('id', $post->id)->update(['title' => 'Updated']);
+        DB::table('authors')->where('id', $author->id)->update(['name' => 'Updated author']);
+
+        $fresh = $query->withoutCache()->effect()->sole();
+
+        $this->assertSame('Updated', $fresh->title);
+        $this->assertSame('Updated author', $fresh->author->name);
+
+        DB::table('posts')->where('id', $post->id)->update(['title' => 'Latest']);
+        DB::table('authors')->where('id', $author->id)->update(['name' => 'Latest author']);
+
+        $latest = $query->setCacheFor(600)->effect()->sole();
+
+        $this->assertSame('Latest', $latest->title);
+        $this->assertSame('Latest author', $latest->author->name);
+
+        $otherInstance = (new $queryClass)->effect()->sole();
+
+        $this->assertSame('Original', $otherInstance->title);
+        $this->assertSame('Original author', $otherInstance->author->name);
+
+        $cachedAgain = $query->withoutCache(false)->effect()->sole();
+
+        $this->assertSame('Original', $cachedAgain->title);
+        $this->assertSame('Original author', $cachedAgain->author->name);
     }
 
     public function test_identical_result_cache_queries_share_the_same_key(): void
@@ -193,5 +309,129 @@ class CacheQueryTest extends TestCase
         $this->assertSame(1, $cachedFirstPage->firstItem());
         $this->assertSame(11, $cachedSecondPage->firstItem());
         $this->assertNotSame($cachedFirstPage->currentPage(), $cachedSecondPage->currentPage());
+    }
+
+    public function test_cached_pagination_resolves_each_request_page_without_mutating_query_state(): void
+    {
+        foreach (range(1, 25) as $index) {
+            Post::create(['title' => "Post {$index}", 'published' => true]);
+        }
+
+        $query = CachedPaginatedPostsQuery::make()->perPage(10);
+        $page = 1;
+
+        Paginator::currentPageResolver(function () use (&$page) {
+            return $page;
+        });
+
+        try {
+            $firstPage = $query->effect();
+            $page = 2;
+            $secondPage = $query->effect();
+
+            $this->assertSame(1, $firstPage->currentPage());
+            $this->assertSame(2, $secondPage->currentPage());
+            $this->assertSame(1, $firstPage->items()[0]->id);
+            $this->assertSame(11, $secondPage->items()[0]->id);
+
+            DB::table('posts')->delete();
+
+            $page = 1;
+            $cachedFirstPage = $query->effect();
+            $page = 2;
+            $cachedSecondPage = $query->effect();
+
+            $this->assertCount(10, $cachedFirstPage->items());
+            $this->assertCount(10, $cachedSecondPage->items());
+            $this->assertSame(1, $cachedFirstPage->items()[0]->id);
+            $this->assertSame(11, $cachedSecondPage->items()[0]->id);
+            $this->assertNull($query->paginationData()->page);
+        } finally {
+            PaginationState::resolveUsing($this->app);
+        }
+    }
+
+    public function test_cached_pagination_normalizes_model_default_page_size(): void
+    {
+        foreach (range(1, 15) as $index) {
+            Post::create(['title' => "Post {$index}", 'published' => true]);
+        }
+
+        $defaultPage = CachedPaginatedPostsQuery::make()->page(1)->effect();
+
+        $this->assertSame(7, $defaultPage->perPage());
+
+        DB::table('posts')->delete();
+
+        $explicitPage = CachedPaginatedPostsQuery::make()->page(1)->perPage(7)->effect();
+
+        $this->assertSame(15, $explicitPage->total());
+        $this->assertCount(7, $explicitPage->items());
+        $this->assertSame(1, $explicitPage->items()[0]->id);
+    }
+
+    public function test_cached_pagination_resolves_custom_page_name_once_and_honors_explicit_page(): void
+    {
+        foreach (range(1, 15) as $index) {
+            Post::create(['title' => "Post {$index}", 'published' => true]);
+        }
+
+        $calls = [];
+
+        Paginator::currentPageResolver(function (string $pageName) use (&$calls) {
+            $calls[] = $pageName;
+
+            return $pageName === 'results' ? 2 : 1;
+        });
+
+        try {
+            $query = CachedPaginatedPostsQuery::make()->pageName('results')->perPage(5);
+            $resolvedPage = $query->effect();
+            $explicitPage = $query->page(3)->effect();
+
+            $this->assertSame(['results'], $calls);
+            $this->assertSame(2, $resolvedPage->currentPage());
+            $this->assertSame(6, $resolvedPage->items()[0]->id);
+            $this->assertSame(3, $explicitPage->currentPage());
+            $this->assertSame(11, $explicitPage->items()[0]->id);
+        } finally {
+            PaginationState::resolveUsing($this->app);
+        }
+    }
+
+    public function test_cached_pagination_keeps_links_for_different_paths_separate(): void
+    {
+        foreach (range(1, 5) as $index) {
+            Post::create(['title' => "Post {$index}", 'published' => true]);
+        }
+
+        $path = 'https://example.com/posts';
+        Paginator::currentPathResolver(function () use (&$path) {
+            return $path;
+        });
+
+        try {
+            $query = CachedPaginatedPostsQuery::make()->page(1)->perPage(2);
+            $firstPath = $query->effect();
+            $path = 'https://example.com/admin/posts';
+            $secondPath = $query->effect();
+
+            $this->assertSame('https://example.com/posts?page=2', $firstPath->nextPageUrl());
+            $this->assertSame('https://example.com/admin/posts?page=2', $secondPath->nextPageUrl());
+
+            DB::table('posts')->delete();
+
+            $path = 'https://example.com/posts';
+            $cachedFirstPath = $query->effect();
+            $path = 'https://example.com/admin/posts';
+            $cachedSecondPath = $query->effect();
+
+            $this->assertCount(2, $cachedFirstPath->items());
+            $this->assertCount(2, $cachedSecondPath->items());
+            $this->assertSame($firstPath->nextPageUrl(), $cachedFirstPath->nextPageUrl());
+            $this->assertSame($secondPath->nextPageUrl(), $cachedSecondPath->nextPageUrl());
+        } finally {
+            PaginationState::resolveUsing($this->app);
+        }
     }
 }

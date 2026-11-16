@@ -3,6 +3,7 @@
 namespace Atldays\Sculptor\Concerns;
 
 use Atldays\Sculptor\Contracts\WithPaginationData;
+use Atldays\Sculptor\Support\CachedNull;
 use Closure;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use JsonException;
@@ -11,36 +12,62 @@ use ReflectionFunction;
 trait InteractsWithResultCache
 {
     /**
+     * @param  array<string, mixed>  $context
+     *
      * @throws JsonException
      */
-    protected function rememberResult(string $kind, callable $callback): mixed
+    protected function rememberResult(string $kind, callable $callback, array $context = [], ?Builder $query = null): mixed
     {
-        return $this->getCache()->remember(
-            $this->cacheKey($kind),
-            $this->cacheFor(),
-            $callback
+        $query = $this->prepareResultCacheQuery($query ?? $this->query());
+        $baseQuery = $query->getQuery();
+        $cacheFor = $this->cacheFor();
+
+        if ((is_int($cacheFor) && $cacheFor <= 0) || $baseQuery->lock !== null || $baseQuery->useWritePdo) {
+            return $callback($query);
+        }
+
+        $result = $this->getCache()->remember(
+            $this->cacheKey($kind, $context, $query),
+            $cacheFor,
+            fn () => $callback($query) ?? CachedNull::Value
         );
+
+        return $result === CachedNull::Value ? null : $result;
+    }
+
+    private function prepareResultCacheQuery(Builder $query): Builder
+    {
+        // Apply scopes and callbacks once, before deciding whether a cache hit is safe.
+        $query = (clone $query)->applyScopes()->withoutGlobalScopes();
+        $query->getQuery()->applyBeforeQueryCallbacks();
+
+        return $query;
     }
 
     /**
+     * @param  array<string, mixed>  $context
+     *
      * @throws JsonException
      */
-    protected function cacheKey(string $kind): string
+    protected function cacheKey(string $kind, array $context = [], ?Builder $query = null): string
     {
+        $query ??= $this->prepareResultCacheQuery($this->query());
+        $payload = array_replace($this->cachePayload($kind, $query), $context);
+
         return sprintf(
             '%s:%s',
             static::class,
-            sha1(json_encode($this->cachePayload($kind), JSON_THROW_ON_ERROR))
+            sha1(json_encode($payload, JSON_THROW_ON_ERROR))
         );
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function cachePayload(string $kind): array
+    private function cachePayload(string $kind, Builder $query): array
     {
-        /** @var Builder $query */
-        $query = $this->query();
+        // SQL grammars may mutate columns, bindings, and offsets while compiling.
+        $query = clone $query;
 
         return [
             'kind' => $kind,

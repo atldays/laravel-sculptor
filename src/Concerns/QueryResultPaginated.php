@@ -4,7 +4,10 @@ namespace Atldays\Sculptor\Concerns;
 
 use Atldays\Sculptor\Contracts\WithPaginatedResult;
 use Atldays\Sculptor\Contracts\WithResultCache;
+use Atldays\Sculptor\Data\PaginationData;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Webmozart\Assert\Assert;
 
 trait QueryResultPaginated
@@ -16,22 +19,34 @@ trait QueryResultPaginated
     {
         Assert::true($this instanceof WithPaginatedResult, 'Paginated result support is required to paginate results');
 
-        $pagination = $this->paginationData();
+        $query = $this->query();
+        $configured = $this->paginationData();
 
-        if ($this instanceof WithResultCache) {
-            return $this->rememberResult('paginate', fn () => $this->query()->paginate(
-                $pagination->perPage,
-                $pagination->columns,
-                $pagination->pageName,
-                $pagination->page,
-            ));
+        $resolved = new PaginationData(
+            perPage: $configured->perPage ?? $query->getModel()->getPerPage(),
+            page: $configured->page ?? Paginator::resolveCurrentPage($configured->pageName),
+            pageName: $configured->pageName,
+            columns: $configured->columns,
+        );
+
+        if ($resolved->columns !== ['*']) {
+            $query->select($resolved->columns);
         }
 
-        return $this->query()->paginate(
-            $pagination->perPage,
-            $pagination->columns,
-            $pagination->pageName,
-            $pagination->page,
+        $execute = fn (Builder $query) => $query->paginate(
+            $resolved->perPage,
+            $resolved->columns,
+            $resolved->pageName,
+            $resolved->page,
         );
+
+        if ($this instanceof WithResultCache) {
+            return clone $this->rememberResult('paginate', $execute, [
+                'pagination' => $resolved->toArray(),
+                'pagination_path' => Paginator::resolveCurrentPath(),
+            ], $query);
+        }
+
+        return $execute($query);
     }
 }

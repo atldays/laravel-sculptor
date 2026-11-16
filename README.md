@@ -46,7 +46,7 @@ php artisan vendor:publish --tag=sculptor-config
 ## Requirements
 
 - PHP `^8.2`
-- Laravel `^10.0|^11.0|^12.0|^13.0`
+- Laravel `^12.72|^13.42` (Laravel 13 requires PHP `^8.3`)
 
 ## Core Classes
 
@@ -348,11 +348,25 @@ If you do not want filter integration, use `BaseQuery`.
 
 ## Result Execution
 
-Sculptor provides three execution helpers:
+Choose one result trait for each query class:
 
-- `QueryResultCollection` for `get()`
-- `QueryResultFirst` for `first()`
-- `QueryResultPaginated` for `paginate()`
+| Trait | Laravel operation | Result |
+| --- | --- | --- |
+| `QueryResultCollection` | `get()` with a required positive limit | Eloquent collection |
+| `QueryResultAll` | `get()` with an optional limit | Eloquent collection |
+| `QueryResultFirst` | `first()` | Model or `null` |
+| `QueryResultFirstOrFail` | `firstOrFail()` | Model, or `ModelNotFoundException` |
+| `QueryResultSole` | `sole()` | Exactly one model, or a native Laravel exception |
+| `QueryResultExists` | `exists()` | `bool` |
+| `QueryResultCount` | `count()` | `int` |
+| `QueryResultValue` | `value($column)` | Column value or `null` |
+| `QueryResultPluck` | `pluck($column, $key)` | Support collection of values |
+| `QueryResultAggregate` | `sum`, `avg`, `min`, or `max` | Native scalar value or `null` |
+| `QueryResultPaginated` | `paginate()` | Length-aware paginator |
+| `QueryResultSimplePaginated` | `simplePaginate()` | Paginator without a total count |
+| `QueryResultCursorPaginated` | `cursorPaginate()` | Cursor paginator |
+
+All result traits work with `Query`, `CachedQuery`, and `BuilderCachedQuery`, and preserve Laravel's operation semantics. Existence checks and counts execute native scalar queries without hydrating models or eager loading relations.
 
 ### Collection Result
 
@@ -382,6 +396,128 @@ class FirstUserQuery extends Query
 }
 ```
 
+### Collection Without a Required Limit
+
+```php
+use App\Models\User;
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\Concerns\QueryResultAll;
+use Atldays\Sculptor\Query;
+
+#[ForModel(User::class)]
+class AllUsersQuery extends Query
+{
+    use QueryResultAll;
+}
+
+$users = AllUsersQuery::result();
+$firstTen = AllUsersQuery::make()->limit(10)->effect();
+```
+
+`QueryResultAll` respects limits from `#[Limit]`, `limit()`, and custom `query()` implementations. Use `withoutLimit()` to disable a Sculptor attribute or runtime limit.
+
+### Required Model and Scalar Results
+
+```php
+use App\Models\User;
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\CachedQuery;
+use Atldays\Sculptor\Concerns\QueryResultCount;
+use Atldays\Sculptor\Concerns\QueryResultExists;
+use Atldays\Sculptor\Concerns\QueryResultFirstOrFail;
+
+#[ForModel(User::class)]
+class RequiredUserQuery extends CachedQuery
+{
+    use QueryResultFirstOrFail;
+}
+
+#[ForModel(User::class)]
+class UsersExistQuery extends CachedQuery
+{
+    use QueryResultExists;
+}
+
+#[ForModel(User::class)]
+class UserCountQuery extends CachedQuery
+{
+    use QueryResultCount;
+}
+
+$user = RequiredUserQuery::result();
+$exists = UsersExistQuery::result();
+$count = UserCountQuery::result();
+```
+
+Add conditions through filters or `query()` as with other query objects. `QueryResultFirstOrFail` preserves Laravel's `ModelNotFoundException`, including the model class. `QueryResultSole` uses `sole()`: zero rows throw `ModelNotFoundException`, and two or more rows throw `MultipleRecordsFoundException`. It checks up to two rows even if `limit(1)` is configured. `CachedQuery` does not store thrown exceptions. `BuilderCachedQuery` may cache the underlying empty or duplicate selection, so subsequent calls still throw until that entry expires or is invalidated.
+
+### Column Values, Pluck, and Aggregates
+
+Use `#[ResultColumn]` to configure the result column for these three traits. `#[PluckKey]` optionally provides collection keys, and `#[Aggregate]` specifies the aggregate function:
+
+```php
+use App\Models\Product;
+use Atldays\Sculptor\Attributes\Aggregate;
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\Attributes\PluckKey;
+use Atldays\Sculptor\Attributes\ResultColumn;
+use Atldays\Sculptor\CachedQuery;
+use Atldays\Sculptor\Concerns\QueryResultAggregate;
+use Atldays\Sculptor\Concerns\QueryResultPluck;
+use Atldays\Sculptor\Concerns\QueryResultValue;
+use Atldays\Sculptor\Enums\AggregateFunction;
+use Atldays\Sculptor\Query;
+
+#[ForModel(Product::class)]
+#[ResultColumn('products.price')]
+class FirstProductPriceQuery extends Query
+{
+    use QueryResultValue;
+}
+
+#[ForModel(Product::class)]
+#[ResultColumn('products.name')]
+#[PluckKey('products.id')]
+class ProductNamesQuery extends CachedQuery
+{
+    use QueryResultPluck;
+}
+
+#[ForModel(Product::class)]
+#[ResultColumn('products.price')]
+#[Aggregate(AggregateFunction::Sum)]
+class TotalProductPriceQuery extends CachedQuery
+{
+    use QueryResultAggregate;
+}
+
+$price = FirstProductPriceQuery::result();
+$namesById = ProductNamesQuery::result();
+$total = TotalProductPriceQuery::result();
+
+$names = ProductNamesQuery::make()->withPluckKey(null)->limit(20)->effect();
+$average = TotalProductPriceQuery::make()->withAggregateFunction('avg')->effect();
+$largestId = TotalProductPriceQuery::make()
+    ->withResultColumn('products.id')
+    ->withAggregateFunction(AggregateFunction::Max)
+    ->effect();
+```
+
+The attributes are inherited. Runtime overrides take precedence and apply to that instance:
+
+- `withResultColumn(string|Expression $column)` overrides the column.
+- `withPluckKey(string|Expression|null $key)` overrides the collection key; `null` explicitly disables an attribute-defined key.
+- `withAggregateFunction(AggregateFunction|string $function)` accepts `sum`, `avg`, `min`, or `max`, case-insensitively.
+- `resultColumn()`, `pluckKey()`, and `aggregateFunction()` return the effective configuration.
+
+The result column is required. `QueryResultAggregate` also requires a function. Missing settings, blank column/key strings, and unsupported function names throw `InvalidArgumentException`.
+
+For `Value` and `Pluck`, the result column and key define the effective `SELECT`, including when a query has `#[Select]`, `withSelect()`, or custom selections. Filters, joins, ordering, and limits remain in effect. Eager loading is disabled for these projections. Eloquent casts, accessors, and date conversion retain native Laravel behavior. Expressions and aliases follow the installed Laravel version's semantics.
+
+Aggregates preserve Laravel's selection, `distinct`, grouping, `having`, and limit semantics. A grouped aggregate returns Laravel's scalar result. Results keep the database driver's types: exact decimal strings are preserved, with no additional conversion to `float`. Empty sums return Laravel's zero; empty averages, minima, and maxima return `null`.
+
+All three traits support both cache strategies. Keys include the result column, optional pluck key, and aggregate function, so runtime overrides produce independent entries. `CachedQuery` caches `null` as a result, including a missing first record or a nullable column; it remains cached until expiration or invalidation. The existing cache bypass, tags, locking rules, and execution events apply to these traits as well.
+
 ### Execution API
 
 - `::make(...$arguments)` resolves the query object through the container
@@ -391,6 +527,8 @@ class FirstUserQuery extends Query
 ### Query Execution Event
 
 Every `::result()` call dispatches `Atldays\Sculptor\Events\ResultExecuted`.
+
+This includes cache hits and calls that throw an exception. Calling `->effect()` directly does not dispatch this event.
 
 The event contains:
 
@@ -406,6 +544,8 @@ Sculptor treats pagination as a separate result type, just like collections and 
 Use:
 
 - `QueryResultPaginated` for Laravel's `paginate()`
+- `QueryResultSimplePaginated` for `simplePaginate()`, without a total count query
+- `QueryResultCursorPaginated` for `cursorPaginate()`, without offsets or a total count query
 
 Example:
 
@@ -417,14 +557,17 @@ namespace App\Queries\Post;
 use App\Models\Post;
 use Atldays\Sculptor\Attributes\ForModel;
 use Atldays\Sculptor\Concerns\QueryResultPaginated;
+use Atldays\Sculptor\Contracts\WithPaginatedResult;
 use Atldays\Sculptor\Query;
 
 #[ForModel(Post::class)]
-class PaginatedPostsQuery extends Query
+class PaginatedPostsQuery extends Query implements WithPaginatedResult
 {
     use QueryResultPaginated;
 }
 ```
+
+`QueryResultPaginated` and `QueryResultSimplePaginated` require `WithPaginatedResult`.
 
 Runtime pagination helpers:
 
@@ -453,7 +596,39 @@ $posts = ProductsByRegionQuery::make(region: 'eu')
 
 When `page()` is not called, Laravel resolves the current page through its paginator resolver, which normally reads the current request query string. When `perPage()` is not called, Eloquent falls back to the model's paginator size through `getPerPage()`.
 
-Pagination also works with `CachedQuery`, and the pagination state is included in the cache key so different pages are cached independently.
+Pagination also works with `CachedQuery` and `BuilderCachedQuery` (with a `QueryCacheable` model). `CachedQuery` caches the paginator result: the resolved current page, effective page size, page name, columns, and base URL for pagination links are included in its key. Different pages and URLs are cached independently, including when Laravel resolves the page from the current request. Resolving request defaults does not change the query object's pagination settings. `BuilderCachedQuery` caches the underlying SQL results and creates a fresh paginator on each call, including its current link options.
+
+Non-default `paginationColumns()` replaces the query's select list for that execution. The default `['*']` keeps the query's configured select list. This applies to all three pagination traits. Pagination uses Laravel's page-size semantics; `limit()` does not cap a page.
+
+For cursor pagination, implement `WithCursorPaginatedResult`:
+
+```php
+use App\Models\Post;
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\CachedQuery;
+use Atldays\Sculptor\Concerns\QueryResultCursorPaginated;
+use Atldays\Sculptor\Contracts\WithCursorPaginatedResult;
+
+#[ForModel(Post::class)]
+class CursorPostsQuery extends CachedQuery implements WithCursorPaginatedResult
+{
+    use QueryResultCursorPaginated;
+}
+
+$page = CursorPostsQuery::make()
+    ->perPage(15)
+    ->cursorName('posts_cursor')
+    ->cursor($encodedCursor) // Laravel Cursor instance, encoded string, or null
+    ->effect();
+
+$next = $page->nextCursor()?->encode();
+```
+
+When no cursor is configured (or `cursor(null)` is used), Laravel resolves it from the current request using `cursorName()`. Use `cursor('')` to explicitly select the first page. Invalid encoded strings follow Laravel's behavior and select the first page. The cursor's parameters and direction, page size, cursor name, columns, and base URL participate in the result cache key. A cursor object and its encoded string share the same entry. `cursorPaginationData()` exposes configured settings without resolving request defaults.
+
+Use a stable, unique ordering for cursor pagination (for example, a timestamp followed by the primary key). Eloquent orders by the primary key when no ordering is supplied. Include every ordering column in the selected columns. Laravel's restrictions on nullable ordering columns, expressions, and cursor parameters still apply.
+
+Paginator instances returned from result cache are cloned so changing their link options (`appends`, `fragment`, `withPath`) does not alter subsequent cache reads. Items retain the normal model/collection cache semantics. All new results support tags, `withoutCache()`, and non-positive TTL bypass. Locks and write-PDO reads bypass both cache strategies.
 
 Use the dedicated pagination methods for page state. Constructor arguments should represent business input such as tenant, region, status, or date range, not paginator state.
 
@@ -542,6 +717,7 @@ If the model is not configured for the query-cache package, this mode fails inte
 Available cache helpers:
 
 - `setCacheFor(int|DateTime $time)`
+- `withoutCache(bool $withoutCache = true)`
 - `setCacheTags(string ...$tags)`
 - `mergeCacheTags(string ...$tags)`
 - `cacheTags()`
@@ -550,6 +726,26 @@ Available cache helpers:
 - `cacheStore()`
 - `getCache()`
 - `flushBaseCache()`
+
+Cache durations are measured in seconds and default to one hour. To execute a query without reading or writing cache entries, use `withoutCache()`. This also bypasses eager loaded relation caches in `BuilderCachedQuery`:
+
+```php
+$posts = CachedPublishedPostsQuery::make()
+    ->withoutCache()
+    ->effect();
+```
+
+This setting applies to that query instance and preserves its configured cache duration and existing entries. Call `withoutCache(false)` to restore caching for the instance. Changing the duration with `setCacheFor()` does not clear the explicit bypass setting.
+
+A zero or negative duration passed to `setCacheFor()` also disables cache reads and writes. Setting a positive duration restores caching when `withoutCache()` is not active. Existing entries remain available until they expire or are invalidated.
+
+Both cache strategies support every result trait, including cached `false`, `0`, and empty collections. Result-cache keys include the result operation as well as the query shape.
+
+Queries with `lockForUpdate()`, `sharedLock()`, or a custom string lock bypass cache reads and writes. This also applies when a global scope or a `beforeQuery` callback adds the lock. Explicit `useWritePdo()` queries bypass the result cache as well. Existing entries are preserved. For database locks to cover subsequent work, execute the query inside the appropriate Laravel transaction.
+
+`CachedQuery` uses one prepared builder for its cache key and execution. Global scopes and before-query callbacks run once per execution, including cache hits, so they can affect both the key and the decision to bypass caching.
+
+The base cache tag contains the fully qualified query class name, for example `sculptor:App\Queries\Post\CachedPublishedPostsQuery`. Query classes with the same short name in different namespaces have independent base tags. Entries written with the previous short-name tag format remain under their original TTL and are no longer read by the updated query class.
 
 ### Custom Cache Tags
 
@@ -638,6 +834,8 @@ Or through Artisan:
 php artisan sculptor:flush-cache "App\\Queries\\Post\\CachedPublishedPostsQuery"
 ```
 
+The command returns exit code `0` when the cache is flushed successfully and `1` when the query class is invalid or the cache store fails to flush.
+
 ## Choosing the Right Class
 
 Use `BaseQuery` when:
@@ -676,7 +874,18 @@ If you need custom composition, the package also exposes low-level building bloc
 - `PreparesCacheableRelations`
 - `HasResult`
 - `QueryResultCollection`
+- `QueryResultAll`
 - `QueryResultFirst`
+- `QueryResultFirstOrFail`
+- `QueryResultSole`
+- `QueryResultExists`
+- `QueryResultCount`
+- `QueryResultValue`
+- `QueryResultPluck`
+- `QueryResultAggregate`
+- `QueryResultPaginated`
+- `QueryResultSimplePaginated`
+- `QueryResultCursorPaginated`
 
 For most applications, the preset classes are the best starting point. Compose these traits only when the preset classes do not fit your query object.
 

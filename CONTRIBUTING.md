@@ -84,6 +84,10 @@ Recommended commit types:
 
 ## Testing
 
+The default development stack requires PHP `8.4.1+` and uses Testbench `^11.3`, Laravel 13, and PHPUnit `^13.4.7`.
+
+CI also validates package compatibility with Laravel 12 and PHP 8.2/8.3. Those jobs temporarily override the development dependencies: Testbench 10 for Laravel 12, PHPUnit 11 for PHP 8.2, and PHPUnit 12 for Laravel 12 on PHP 8.3+ and Laravel 13 on PHP 8.3. Testbench 10 conflicts with PHPUnit 13.2 and later. The package's runtime requirements are listed separately in `composer.json`.
+
 Every change should be covered by tests when it affects behavior.
 
 At minimum, contributors should run:
@@ -91,9 +95,25 @@ At minimum, contributors should run:
 ```bash
 composer format:test
 composer test
+composer audit
 ```
 
 This package is tested across multiple Laravel and PHP versions in CI, so local changes should avoid assumptions tied to only one framework version.
+
+### PostgreSQL projection tests
+
+The regular test run skips the `postgres` group unless `SCULPTOR_PGSQL_DATABASE` is set. These tests verify exact `NUMERIC`/`DECIMAL` values and native nullable aggregate types through plain queries and both cache strategies. They require `pdo_sqlite` and `pdo_pgsql` and create and drop uniquely prefixed tables in the configured test database.
+
+```bash
+SCULPTOR_PGSQL_HOST=127.0.0.1 \
+SCULPTOR_PGSQL_PORT=5432 \
+SCULPTOR_PGSQL_DATABASE=sculptor_test \
+SCULPTOR_PGSQL_USER=postgres \
+SCULPTOR_PGSQL_PASSWORD=postgres \
+vendor/bin/phpunit --no-coverage --group postgres --fail-on-skipped --fail-on-empty-test-suite
+```
+
+CI runs this group against PostgreSQL 17 with both supported Laravel versions. Skipped or empty PostgreSQL suites fail the job.
 
 ## What To Test
 
