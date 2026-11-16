@@ -3,7 +3,7 @@
 namespace Atldays\Sculptor\Concerns;
 
 use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\Attributes\Helpers\AttributeReader;
+use Atldays\Sculptor\Support\AttributeReader;
 use Illuminate\Database\Eloquent\Model;
 use Webmozart\Assert\Assert;
 

@@ -954,6 +954,20 @@ The resolver retains constructor parameter metadata, reading current property va
 
 The generated scope tags are identical to those produced by the previous static implementation, so `flushScope()` can still invalidate existing entries. The resolver remains an internal helper in `Support`: applications should normally use query methods such as `flushScope()` and `cacheTags()`.
 
+### Attribute Reader
+
+`Atldays\Sculptor\Support\AttributeReader` reads class attributes from an object or a class name. It returns the nearest matching attribute instance, searching parent classes when necessary, or `null` if the attribute is absent:
+
+```php
+use Atldays\Sculptor\Attributes\CacheFor;
+use Atldays\Sculptor\Support\AttributeReader;
+
+$attribute = AttributeReader::make(UserProjectList::class)->get(CacheFor::class);
+$seconds = $attribute?->seconds();
+```
+
+The previous `Atldays\Sculptor\Attributes\Helpers\AttributeReader` namespace remains available as a deprecated compatibility class that inherits the implementation from `Support`. Its constructor and `make()` factory remain supported. Use the `Support` namespace in new code.
+
 ### Eloquent Model Scopes
 
 An Eloquent model can be a marked constructor argument:

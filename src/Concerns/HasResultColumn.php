@@ -2,8 +2,8 @@
 
 namespace Atldays\Sculptor\Concerns;
 
-use Atldays\Sculptor\Attributes\Helpers\AttributeReader;
 use Atldays\Sculptor\Attributes\ResultColumn;
+use Atldays\Sculptor\Support\AttributeReader;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Contracts\Database\Query\Expression;
 use Webmozart\Assert\Assert;

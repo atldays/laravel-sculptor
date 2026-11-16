@@ -3,8 +3,8 @@
 namespace Atldays\Sculptor\Concerns;
 
 use Atldays\Sculptor\Attributes\Aggregate;
-use Atldays\Sculptor\Attributes\Helpers\AttributeReader;
 use Atldays\Sculptor\Enums\AggregateFunction;
+use Atldays\Sculptor\Support\AttributeReader;
 use Webmozart\Assert\Assert;
 
 trait HasAggregateFunction

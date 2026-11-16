@@ -2,8 +2,8 @@
 
 namespace Atldays\Sculptor\Concerns;
 
-use Atldays\Sculptor\Attributes\Helpers\AttributeReader;
 use Atldays\Sculptor\Attributes\PluckKey;
+use Atldays\Sculptor\Support\AttributeReader;
 use Illuminate\Contracts\Database\Query\Expression;
 
 trait HasPluckKey

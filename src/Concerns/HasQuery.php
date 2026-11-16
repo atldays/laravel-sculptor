@@ -2,8 +2,8 @@
 
 namespace Atldays\Sculptor\Concerns;
 
-use Atldays\Sculptor\Attributes\Helpers\AttributeReader;
 use Atldays\Sculptor\Attributes\{Limit, Select, WithRelations};
+use Atldays\Sculptor\Support\AttributeReader;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
