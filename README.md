@@ -1,65 +1,30 @@
 # Laravel Sculptor
 
+**A home for complex, reusable Eloquent queries.**
+
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/atldays/laravel-sculptor.svg?logo=packagist&style=for-the-badge)](https://packagist.org/packages/atldays/laravel-sculptor)
 [![Total Downloads](https://img.shields.io/packagist/dt/atldays/laravel-sculptor.svg?style=for-the-badge&color=blue)](https://packagist.org/packages/atldays/laravel-sculptor)
 [![CI](https://img.shields.io/github/actions/workflow/status/atldays/laravel-sculptor/ci.yml?style=for-the-badge&label=CI)](https://github.com/atldays/laravel-sculptor/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE.md)
 
-`laravel-sculptor` provides reusable query objects for Eloquent.
+Sculptor keeps relationship constraints, joins, filters, projections, and ordering in dedicated query classes. Reuse those classes from controllers, jobs, commands, or services, with caching and invalidation defined alongside the read logic.
 
-It moves complex read logic out of controllers and services into dedicated classes with a consistent API for:
-
-- model binding
-- `select` control
-- eager loading
-- filters
-- result execution
-- pagination
-- result caching
-- builder-level cache integration
-
-## Why
-
-As Laravel applications grow, read queries often become hard to maintain:
-
-- controllers start building large queries inline
-- services repeat the same `with`, `select`, and filtering logic
-- cache behavior becomes inconsistent
-- query rules become difficult to test in isolation
-
-Sculptor solves this by introducing query objects: focused classes that represent a single read operation.
+- **Encapsulate complex reads.** Give a substantial query a name, explicit constructor inputs, and a place to evolve and test.
+- **Keep cache behavior with the query.** Choose result or builder caching, declare a TTL, and bypass caching when you need a fresh read.
+- **Invalidate by domain inputs.** Clear all of a user's cached pages or a subset of a report through constructor-argument scopes, or share tags across queries.
+- **Choose the result type.** Use 13 result traits for models, collections, scalar values, aggregates, and pagination, with attributes and fluent overrides for configuration.
 
 ## Installation
-
-Add the package via Composer:
 
 ```bash
 composer require atldays/laravel-sculptor
 ```
 
-Publish the package config if needed:
-
-```bash
-php artisan vendor:publish --tag=sculptor-config
-```
-
-## Requirements
-
-- PHP `^8.2`
-- Laravel `^12.72|^13.42` (Laravel 13 requires PHP `^8.3`)
-
-## Core Classes
-
-| Class | Filters | Cache | Requires query-cache-enabled model |
-| --- | --- | --- | --- |
-| `BaseQuery` | No | No | No |
-| `Query` | Yes | No | No |
-| `CachedQuery` | Yes | Result cache | No |
-| `BuilderCachedQuery` | Yes | Builder cache | Yes |
-
-These classes are the recommended entry points for day-to-day use. Lower-level traits are available when you need custom composition.
+Requires PHP `^8.2` and Laravel `^12.72|^13.42`. Laravel 13 requires PHP `^8.3`. The service provider is discovered automatically.
 
 ## Quick Start
+
+Build a user's published-post list with approved comments, author loading, comment counts, optional title search, and ordering by discussion activity. The query class owns those rules; callers supply the inputs:
 
 ```php
 <?php
@@ -67,88 +32,332 @@ These classes are the recommended entry points for day-to-day use. Lower-level t
 namespace App\Queries\Post;
 
 use App\Models\Post;
-use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\Attributes\Limit;
-use Atldays\Sculptor\Attributes\WithRelations;
-use Atldays\Sculptor\Concerns\QueryResultCollection;
+use Atldays\Sculptor\Attributes\{ForModel, Select, WithRelations};
+use Atldays\Sculptor\Concerns\QueryResultAll;
 use Atldays\Sculptor\Query;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 
 #[ForModel(Post::class)]
+#[Select(['posts.id', 'posts.author_id', 'posts.title'])]
 #[WithRelations(['author'])]
-#[Limit(10)]
-class PublishedPostsQuery extends Query
+class PostsForUser extends Query
 {
-    use QueryResultCollection;
+    use QueryResultAll;
+
+    public function __construct(
+        private readonly int $userId,
+        private readonly ?string $search = null,
+    ) {}
+
+    public function query(): Builder
+    {
+        $approvedComments = fn (Builder $comments) => $comments->where('approved', true);
+
+        $query = parent::query()
+            ->where('posts.author_id', $this->userId)
+            ->where('posts.published', true)
+            ->whereHas('comments', $approvedComments)
+            ->withCount(['comments as approved_comments_count' => $approvedComments]);
+
+        if ($this->search !== null) {
+            $query->where('posts.title', 'like', '%' . $this->search . '%');
+        }
+
+        return $query
+            ->orderByDesc('approved_comments_count')
+            ->orderByDesc('posts.id');
+    }
 }
 ```
 
-Execute the query:
+Execute it directly, or customize an instance before execution:
 
 ```php
-$posts = PublishedPostsQuery::result();
-```
+use App\Queries\Post\PostsForUser;
 
-Or create the object first and customize it before execution:
+// Get the result immediately using the query's defaults.
+$posts = PostsForUser::result(userId: 42);
 
-```php
-$posts = PublishedPostsQuery::make()
+// Or customize this execution before retrieving the result.
+$preview = PostsForUser::make(userId: 42, search: 'Laravel')
     ->limit(5)
     ->withoutRelations()
     ->effect();
 ```
 
-## Query Building
+The example assumes `Post` has `author` and `comments` relationships, and comments have an `approved` flag.
 
-Every query object starts with a model. The recommended way to declare static query defaults is with class-level PHP attributes:
+`QueryResultAll` returns an Eloquent collection through `get()`. It works without a limit and respects one when you set it. Include the primary and foreign keys needed by your eager-loaded relations when selecting specific columns.
+
+`make()` resolves the query through Laravel's container, so constructor dependencies can be injected alongside named input arguments. `result()` creates and executes an instance; `effect()` executes an instance you have configured. Use one result trait per query class.
+
+## Choose Your Result
+
+All result traits live in `Atldays\Sculptor\Concerns`. Choose the operation that describes your read; each trait delegates to the corresponding Laravel method.
+
+| Trait | Laravel operation | Result / purpose |
+| --- | --- | --- |
+| `QueryResultAll` | `get()` | Eloquent collection; optional limit |
+| `QueryResultCollection` | `get()` | Eloquent collection with a required positive Sculptor limit |
+| `QueryResultFirst` | `first()` | First model or `null` |
+| `QueryResultFirstOrFail` | `firstOrFail()` | First model or `ModelNotFoundException` |
+| `QueryResultSole` | `sole()` | Exactly one model; throws when zero or multiple records match |
+| `QueryResultExists` | `exists()` | `bool`, without loading models |
+| `QueryResultCount` | `count()` | `int` |
+| `QueryResultValue` | `value()` | One column's value or `null` |
+| `QueryResultPluck` | `pluck()` | Support collection of values, optionally keyed by another column |
+| `QueryResultAggregate` | `sum()`, `avg()`, `min()`, `max()` | Native aggregate value |
+| `QueryResultPaginated` | `paginate()` | `LengthAwarePaginator`, including a total count |
+| `QueryResultSimplePaginated` | `simplePaginate()` | `Paginator`, without a total count query |
+| `QueryResultCursorPaginated` | `cursorPaginate()` | `CursorPaginator` for cursor navigation |
+
+### Models and Checks
+
+A model result can still represent a substantial read. For example, choose the next post to moderate by finding an author's published posts with pending comments and prioritizing the largest queue:
 
 ```php
+use App\Models\Post;
 use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\Attributes\Limit;
-use Atldays\Sculptor\Attributes\Select;
-use Atldays\Sculptor\Attributes\WithRelations;
+use Atldays\Sculptor\Concerns\QueryResultFirstOrFail;
+use Atldays\Sculptor\Query;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 
 #[ForModel(Post::class)]
-#[Select(['posts.id', 'posts.title', 'posts.author_id'])]
-#[WithRelations(['author'])]
-#[Limit(20)]
-class PostIndexQuery extends Query
+class NextPostToModerate extends Query
+{
+    use QueryResultFirstOrFail;
+
+    public function __construct(private readonly int $userId) {}
+
+    public function query(): Builder
+    {
+        $pendingComments = fn (Builder $comments) => $comments->where('approved', false);
+
+        return parent::query()
+            ->where('posts.author_id', $this->userId)
+            ->where('posts.published', true)
+            ->whereHas('comments', $pendingComments)
+            ->withCount(['comments as pending_comments_count' => $pendingComments])
+            ->orderByDesc('pending_comments_count')
+            ->orderBy('posts.id');
+    }
+}
+
+$post = NextPostToModerate::result(userId: 42);
+```
+
+Use `QueryResultFirstOrFail` when the workflow requires a match, `QueryResultFirst` when absence is expected, or `QueryResultSole` when multiple matches must also be an error. `sole()` preserves Laravel's `ModelNotFoundException` and `MultipleRecordsFoundException`.
+
+For checks and counts, pair the same query-building approach with `QueryResultExists` or `QueryResultCount`. These perform database operations for the requested result rather than fetching a collection to inspect in PHP.
+
+### Column Values, Keyed Lists, and Aggregates
+
+For a tenant's paid-order report over a date range, an abstract query base can own the shared read rules. Concrete classes choose how those rules return their result:
+
+```php
+namespace App\Queries\Order;
+
+use App\Models\Order;
+use Atldays\Sculptor\Attributes\{Aggregate, ForModel, PluckKey, ResultColumn};
+use Atldays\Sculptor\Concerns\{QueryResultAggregate, QueryResultPluck, QueryResultValue};
+use Atldays\Sculptor\Enums\AggregateFunction;
+use Atldays\Sculptor\Query;
+use Illuminate\Contracts\Database\Eloquent\Builder;
+
+#[ForModel(Order::class)]
+abstract class PaidOrders extends Query
+{
+    public function __construct(
+        private readonly int $tenantId,
+        private readonly string $from,
+        private readonly string $until,
+    ) {}
+
+    public function query(): Builder
+    {
+        return parent::query()
+            ->where('orders.tenant_id', $this->tenantId)
+            ->where('orders.status', 'paid')
+            ->where('orders.paid_at', '>=', $this->from)
+            ->where('orders.paid_at', '<', $this->until)
+            ->orderBy('orders.id');
+    }
+}
+
+#[ResultColumn('orders.total')]
+class OrderTotal extends PaidOrders
+{
+    use QueryResultValue;
+}
+
+#[ResultColumn('orders.total')]
+#[PluckKey('orders.id')]
+class OrderTotalList extends PaidOrders
+{
+    use QueryResultPluck;
+}
+
+#[ResultColumn('orders.total')]
+#[Aggregate(AggregateFunction::Sum)]
+class OrderRevenue extends PaidOrders
+{
+    use QueryResultAggregate;
+}
+
+$period = ['tenantId' => 7, 'from' => '2026-11-01', 'until' => '2026-12-01'];
+
+$firstOrderTotal = OrderTotal::result(...$period);
+$totalsById = OrderTotalList::result(...$period);
+$totalRevenue = OrderRevenue::result(...$period);
+
+$customerIds = OrderTotalList::make(...$period)
+    ->withResultColumn('orders.customer_id')
+    ->withPluckKey(null)
+    ->effect();
+
+$averageOrderTotal = OrderRevenue::make(...$period)
+    ->withAggregateFunction(AggregateFunction::Avg)
+    ->effect();
+```
+
+The date range includes `from` and excludes `until`. The same tenant, payment-status, and date constraints apply to every result above. `withPluckKey(null)` explicitly removes an attribute-defined key. Column and key overrides also accept Laravel SQL expressions. Aggregate operations accept `AggregateFunction` cases or strings such as `'sum'` and `'avg'`.
+
+Value and pluck queries select their projection instead of `#[Select]` / `withSelect()` columns and skip eager loading. They preserve Laravel's casts, accessors, and date handling. Aggregates preserve native grouping, `having`, and database return types: decimal strings are not forcibly converted to floats. Empty `sum()` returns zero; empty `avg()`, `min()`, and `max()` return `null`, following Laravel.
+
+### Deliberately Bounded Collections
+
+Use `QueryResultCollection` when forgetting a limit should be an error. A bounded preview can reuse the same paid-order report rules:
+
+```php
+namespace App\Queries\Order;
+
+use Atldays\Sculptor\Attributes\Limit;
+use Atldays\Sculptor\Concerns\QueryResultCollection;
+
+#[Limit(10)]
+class PaidOrderPreview extends PaidOrders
 {
     use QueryResultCollection;
 }
+
+$orders = PaidOrderPreview::make(...$period)->limit(20)->effect();
 ```
 
-Sculptor supports:
+Set the positive limit through `#[Limit]` or Sculptor's `limit()` method. A limit added only inside an overridden `query()` does not satisfy this guard. Choose `QueryResultAll` for intentionally unbounded collections.
 
-- default `select(table.*)`
-- custom `select`
-- eager loading through relations
-- overriding eager loads at runtime
-- limiting result size
+## Configure with PHP Attributes
 
-Runtime helpers:
+Attributes live in `Atldays\Sculptor\Attributes`. They keep a query's defaults beside its definition; runtime methods let callers customize an instance.
 
-- `withSelect(string|array $columns)`
-- `select()`
-- `withRelations(string|array|Collection $relations)`
-- `relations()`
-- `withoutRelations()`
-- `resetRelations()`
-- `limit(int $limit)`
-- `hasLimit()`
-- `withoutLimit()`
-- `model()`
-- `newModel()`
+| Attribute | Purpose | Runtime configuration / related API |
+| --- | --- | --- |
+| `#[ForModel(Post::class)]` | Bind an Eloquent model | `model()`, `newModel()` |
+| `#[Select(['posts.id', 'posts.title'])]` | Default selected columns | `withSelect(...)`, `select()` |
+| `#[WithRelations(['author'])]` | Default eager-loaded relations | `withRelations(...)`, `withoutRelations()`, `resetRelations()` |
+| `#[Limit(10)]` | Default result limit | `limit(20)`, `withoutLimit()`, `hasLimit()` |
+| `#[ResultColumn('posts.title')]` | Value, pluck, or aggregate column | `withResultColumn(...)` |
+| `#[PluckKey('posts.id')]` | Optional key for a pluck collection | `withPluckKey(...)` |
+| `#[Aggregate(AggregateFunction::Sum)]` | Aggregate operation | `withAggregateFunction(...)` |
+| `#[CacheFor(600)]` | Default cache TTL in seconds | `setCacheFor(...)`, `withoutCache()` |
+| `#[CacheScope]` | Group entries by a promoted constructor argument | `flushScope(...)` |
+| `#[CacheStore('redis')]` | Select a cache store | `cacheStore()` |
+| `#[CacheStoreFromConfig('services.cache.queries_store', 'redis')]` | Resolve a store from config, with a fallback | `cacheStore()` |
+| `#[DefaultCacheStore]` | Use Sculptor's configured default store | `cacheStore()` |
 
-The existing extension points keep their precedence:
+`AggregateFunction` lives in `Atldays\Sculptor\Enums`. All attributes are class-level except `CacheScope`, which marks promoted constructor parameters. Class attributes are inherited; the nearest matching declaration wins. `DefaultCacheStore` can explicitly restore default-store selection in a subclass.
 
-- runtime helpers such as `withSelect()`, `withRelations()`, and `limit()` override static defaults
-- class properties such as `$model`, `$select`, and `$with` override attributes
-- overriding `model()`, `select()`, `relations()`, or `query()` gives the query class full control
-- `withoutLimit()` disables both a runtime limit and a `#[Limit]` default for that query instance
+Runtime overrides take precedence over attribute defaults. The existing `$model`, `$select`, and `$with` properties remain supported; those properties take precedence over their corresponding attributes, after applicable runtime overrides. With no select configuration, Sculptor selects the model's qualified `*` columns.
 
-### Alternative Property Configuration
+```php
+$posts = PostsForUser::make(userId: 42)
+    ->withSelect(['posts.id', 'posts.author_id', 'posts.title', 'posts.created_at'])
+    ->withRelations(['author'])
+    ->limit(25)
+    ->effect();
+```
 
-Properties remain fully supported for existing query objects and for teams that prefer PHP class state over attributes:
+`withSelect()` and `withRelations()` replace their respective defaults for that instance. `resetRelations()` restores the default relation configuration; `withoutRelations()` disables eager loading. `withoutLimit()` removes the configured bound, including an attribute default.
+
+## Organize Read Logic
+
+Choose a base class from `Atldays\Sculptor` according to how your query will be used:
+
+- **`Query`** is the usual starting point, combining query construction with composable filters.
+- **`CachedQuery`** adds caching for the completed result and works with standard Eloquent models.
+- **`BuilderCachedQuery`** caches the underlying database queries and cacheable eager-loaded relations. Use it with models that include `QueryCacheable`.
+- **`BaseQuery`** provides query construction alone, for reads that do not need filter integration or Sculptor caching.
+
+The three filter-enabled classes require the model's `Filterable` trait when applying filters. Keep application-specific rules in `query()`; calling `parent::query()` preserves the model, selected columns, relations, filters, and configured cache strategy.
+
+Group query classes by the feature they serve. For example:
+
+```text
+app/
+├── Models/
+│   ├── Order.php
+│   └── Post.php
+└── Queries/
+    ├── Order/
+    │   ├── PaidOrders.php
+    │   ├── OrderTotal.php
+    │   ├── OrderTotalList.php
+    │   ├── OrderRevenue.php
+    │   └── PaidOrderPreview.php
+    └── Post/
+        ├── Filters/
+        │   └── PublishedFilter.php
+        ├── PostsForUser.php
+        ├── NextPostToModerate.php
+        └── PaginatedPostsForUser.php
+```
+
+A controller, job, or command can call the same `PostsForUser::result(userId: 42)`. Constructor arguments carry inputs such as user IDs and date ranges; the class owns how those inputs shape the read. Keep feature-specific filters alongside their query classes, such as `Queries/Post/Filters`. Queries shared across application entry points stay in this feature directory as their rules grow.
+
+### Compose Filters
+
+`Query`, `CachedQuery`, and `BuilderCachedQuery` integrate with [Laravel Eloquent Filters](https://github.com/atldays/laravel-eloquent-filters). Add its `Atldays\EloquentFilters\Filterable` trait to models that use filters, then implement reusable rules:
+
+```php
+namespace App\Queries\Post\Filters;
+
+use Atldays\EloquentFilters\Contracts\EloquentFilterContract;
+use Illuminate\Database\Eloquent\Builder;
+
+class PublishedFilter implements EloquentFilterContract
+{
+    public function apply(Builder $query): Builder
+    {
+        return $query->where('published', true);
+    }
+
+    public function isApplicable(): bool
+    {
+        return true;
+    }
+}
+```
+
+Apply filters at the call site, or add defaults in the query's constructor. For example, add a publication filter to the paginated query shown below:
+
+```php
+use App\Queries\Post\{Filters\PublishedFilter, PaginatedPostsForUser};
+
+$posts = PaginatedPostsForUser::make(userId: 42)
+    ->addFilter(new PublishedFilter)
+    ->effect();
+```
+
+## Pagination
+
+Choose the result trait for your navigation style and implement its matching contract:
+
+| Trait | Required contract (`Atldays\Sculptor\Contracts`) | Best fit |
+| --- | --- | --- |
+| `QueryResultPaginated` | `WithPaginatedResult` | Numbered pages with totals |
+| `QueryResultSimplePaginated` | `WithPaginatedResult` | Previous / next navigation |
+| `QueryResultCursorPaginated` | `WithCursorPaginatedResult` | Cursor-based feeds |
+
+Keep the complete read and its cache policy together. This paginated post list loads authors, counts approved comments, filters by owner and status, and caches the result for ten minutes:
 
 ```php
 <?php
@@ -156,1006 +365,319 @@ Properties remain fully supported for existing query objects and for teams that 
 namespace App\Queries\Post;
 
 use App\Models\Post;
-use Atldays\Sculptor\Concerns\QueryResultCollection;
-use Atldays\Sculptor\Query;
-
-class PostIndexQuery extends Query
-{
-    use QueryResultCollection;
-
-    protected string $model = Post::class;
-
-    protected array $select = [
-        'posts.id',
-        'posts.title',
-        'posts.slug',
-        'posts.author_id',
-    ];
-
-    protected array $with = [
-        'author',
-        'categories',
-    ];
-
-    public function __construct()
-    {
-        $this->limit(20);
-    }
-}
-```
-
-## Where To Put Query Logic
-
-The main value of Sculptor is not simple one-line queries. It is the ability to move large, reusable read logic into dedicated classes.
-
-As a rule of thumb:
-
-- use attributes such as `#[ForModel]`, `#[Select]`, `#[WithRelations]`, and `#[Limit]` for static query structure
-- use the constructor for runtime configuration such as filters, limits, cache tags, or arguments passed into the query object
-- override `query()` when the query requires joins, subqueries, conditional clauses, aggregates, raw expressions, or other larger composition
-
-For complex queries, start from the base implementation and then extend it:
-
-```php
-<?php
-
-namespace App\Queries\Order;
-
-use App\Models\Order;
-use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\Attributes\Limit;
-use Atldays\Sculptor\Attributes\WithRelations;
-use Atldays\Sculptor\Concerns\QueryResultCollection;
-use Atldays\Sculptor\Query;
+use Atldays\Sculptor\Attributes\{CacheFor, CacheScope, CacheStore, ForModel, WithRelations};
+use Atldays\Sculptor\CachedQuery;
+use Atldays\Sculptor\Concerns\QueryResultPaginated;
+use Atldays\Sculptor\Contracts\WithPaginatedResult;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 
-#[ForModel(Order::class)]
-#[WithRelations(['customer'])]
-#[Limit(100)]
-class OrdersReportQuery extends Query
+#[ForModel(Post::class)]
+#[CacheStore('redis')]
+#[CacheFor(600)]
+#[WithRelations(['author'])]
+class PaginatedPostsForUser extends CachedQuery implements WithPaginatedResult
 {
-    use QueryResultCollection;
+    use QueryResultPaginated;
 
     public function __construct(
-        protected readonly ?int $customerId = null,
-        protected readonly bool $onlyPaid = true,
+        #[CacheScope] private readonly int $userId,
+        #[CacheScope] private readonly ?string $status = null,
     ) {}
 
     public function query(): Builder
     {
         $query = parent::query()
-            ->leftJoin('payments', 'payments.order_id', '=', 'orders.id')
-            ->leftJoin('shipments', 'shipments.order_id', '=', 'orders.id')
-            ->addSelect([
-                'orders.id',
-                'orders.customer_id',
-                'orders.total',
-                'payments.status as payment_status',
-                'shipments.tracking_number',
+            ->where('posts.author_id', $this->userId)
+            ->withCount([
+                'comments as approved_comments_count' => fn (Builder $comments) => $comments->where('approved', true),
             ]);
 
-        if ($this->customerId !== null) {
-            $query->where('orders.customer_id', $this->customerId);
+        if ($this->status !== null) {
+            $query->where('posts.status', $this->status);
         }
 
-        if ($this->onlyPaid) {
-            $query->where('payments.status', 'paid');
-        }
-
-        return $query->orderByDesc('orders.created_at');
+        return $query
+            ->orderByDesc('approved_comments_count')
+            ->orderByDesc('posts.id');
     }
 }
 ```
 
-This is the recommended pattern for larger query objects:
-
-- keep reusable defaults in attributes
-- keep runtime input in the constructor
-- keep heavy SQL composition in `query()`
-- return the final Eloquent builder from `query()`
-
-That makes the query object easy to reuse, test, and evolve without pushing read logic back into controllers or services.
-
-You can apply the same pattern to cached query objects:
+This example also assumes a `posts.status` column and a configured Redis cache store. Use `Query` instead of `CachedQuery` and omit the cache attributes when caching is unnecessary.
 
 ```php
-<?php
+use App\Queries\Post\PaginatedPostsForUser;
 
-namespace App\Queries\Product;
+// Resolve ?page=... from the current request and use the model's page size.
+$posts = PaginatedPostsForUser::result(userId: 42, status: 'published');
 
-use App\Models\Product;
-use Atldays\Sculptor\Attributes\CacheFor;
-use Atldays\Sculptor\Attributes\CacheStore;
+// Or supply pagination explicitly, including a custom query-string parameter.
+$posts = PaginatedPostsForUser::make(userId: 42, status: 'published')
+    ->perPage(20)
+    ->page(2)
+    ->pageName('posts_page')
+    ->effect();
+
+// Invalidate every status and every cached page for this user.
+PaginatedPostsForUser::flushScope(userId: 42);
+```
+
+`perPage()`, `page()`, `pageName()`, and `paginationColumns()` are available for both numbered pagination traits. `paginationData()` returns the configured settings. The default `paginationColumns(['*'])` preserves `#[Select]` / `withSelect()`; an explicit column list replaces the execution select. Page size comes from `perPage()` or the model's `getPerPage()`, not `#[Limit]`.
+
+Result-cache keys distinguish the resolved page, page size, page name, selected columns, and pagination path. Request-derived page numbers are resolved before key generation, so pages do not share an entry accidentally. Builder caching reuses the underlying SQL results and builds a fresh paginator for each call.
+
+### Cursor Navigation
+
+Use a stable, unique ordering and include the ordered columns in the selection:
+
+```php
+use App\Models\Post;
 use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\Attributes\Limit;
-use Atldays\Sculptor\Attributes\WithRelations;
-use Atldays\Sculptor\CachedQuery;
-use Atldays\Sculptor\Concerns\QueryResultCollection;
+use Atldays\Sculptor\Concerns\QueryResultCursorPaginated;
+use Atldays\Sculptor\Contracts\WithCursorPaginatedResult;
+use Atldays\Sculptor\Query;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 
-#[CacheStore('redis')]
-#[CacheFor(600)]
-#[ForModel(Product::class)]
-#[WithRelations(['brand', 'categories'])]
-#[Limit(20)]
-class TrendingProductsQuery extends CachedQuery
+#[ForModel(Post::class)]
+class PostFeed extends Query implements WithCursorPaginatedResult
 {
-    use QueryResultCollection;
-
-    public function __construct(
-        protected readonly string $region,
-        protected readonly int $days = 7,
-    ) {
-        $this->setCacheTags('products', "region:{$this->region}", "days:{$this->days}");
-    }
+    use QueryResultCursorPaginated;
 
     public function query(): Builder
     {
         return parent::query()
-            ->join('product_stats', 'product_stats.product_id', '=', 'products.id')
-            ->where('product_stats.region', $this->region)
-            ->where('product_stats.period_days', $this->days)
-            ->where('products.is_active', true)
-            ->orderByDesc('product_stats.score')
-            ->addSelect([
-                'products.id',
-                'products.name',
-                'products.slug',
-                'products.brand_id',
-                'product_stats.score',
-            ]);
+            ->where('posts.published', true)
+            ->whereHas('comments', fn (Builder $comments) => $comments->where('approved', true))
+            ->orderByDesc('posts.id');
     }
 }
-```
 
-This gives you a single reusable class that owns:
+$firstPage = PostFeed::make()->perPage(20)->cursor('')->effect();
 
-- the query shape
-- the runtime inputs
-- the cache policy
-- the cache tags used for later invalidation
-
-## Filters
-
-`Query` includes filter support out of the box through `atldays/laravel-eloquent-filters`.
-
-```php
-<?php
-
-namespace App\Queries\Post;
-
-use App\Models\Post;
-use App\QueryFilters\PublishedFilter;
-use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\Attributes\Limit;
-use Atldays\Sculptor\Concerns\QueryResultCollection;
-use Atldays\Sculptor\Query;
-
-#[ForModel(Post::class)]
-#[Limit(10)]
-class PublishedPostsQuery extends Query
-{
-    use QueryResultCollection;
-
-    public function __construct()
-    {
-        $this->addFilter(new PublishedFilter());
-    }
+if (($nextCursor = $firstPage->nextCursor()) !== null) {
+    $nextPage = PostFeed::make()->perPage(20)->cursor($nextCursor)->effect();
 }
 ```
 
-If you do not want filter integration, use `BaseQuery`.
-
-## Result Execution
-
-Choose one result trait for each query class:
-
-| Trait | Laravel operation | Result |
-| --- | --- | --- |
-| `QueryResultCollection` | `get()` with a required positive limit | Eloquent collection |
-| `QueryResultAll` | `get()` with an optional limit | Eloquent collection |
-| `QueryResultFirst` | `first()` | Model or `null` |
-| `QueryResultFirstOrFail` | `firstOrFail()` | Model, or `ModelNotFoundException` |
-| `QueryResultSole` | `sole()` | Exactly one model, or a native Laravel exception |
-| `QueryResultExists` | `exists()` | `bool` |
-| `QueryResultCount` | `count()` | `int` |
-| `QueryResultValue` | `value($column)` | Column value or `null` |
-| `QueryResultPluck` | `pluck($column, $key)` | Support collection of values |
-| `QueryResultAggregate` | `sum`, `avg`, `min`, or `max` | Native scalar value or `null` |
-| `QueryResultPaginated` | `paginate()` | Length-aware paginator |
-| `QueryResultSimplePaginated` | `simplePaginate()` | Paginator without a total count |
-| `QueryResultCursorPaginated` | `cursorPaginate()` | Cursor paginator |
-
-All result traits work with `Query`, `CachedQuery`, and `BuilderCachedQuery`, and preserve Laravel's operation semantics. Existence checks and counts execute native scalar queries without hydrating models or eager loading relations.
-
-### Collection Result
-
-```php
-use App\Models\User;
-use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\Attributes\Limit;
-
-#[ForModel(User::class)]
-#[Limit(25)]
-class UsersQuery extends Query
-{
-    use QueryResultCollection;
-}
-```
-
-### First Result
-
-```php
-use App\Models\User;
-use Atldays\Sculptor\Attributes\ForModel;
-
-#[ForModel(User::class)]
-class FirstUserQuery extends Query
-{
-    use QueryResultFirst;
-}
-```
-
-### Collection Without a Required Limit
-
-```php
-use App\Models\User;
-use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\Concerns\QueryResultAll;
-use Atldays\Sculptor\Query;
-
-#[ForModel(User::class)]
-class AllUsersQuery extends Query
-{
-    use QueryResultAll;
-}
-
-$users = AllUsersQuery::result();
-$firstTen = AllUsersQuery::make()->limit(10)->effect();
-```
-
-`QueryResultAll` respects limits from `#[Limit]`, `limit()`, and custom `query()` implementations. Use `withoutLimit()` to disable a Sculptor attribute or runtime limit.
-
-### Required Model and Scalar Results
-
-```php
-use App\Models\User;
-use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\CachedQuery;
-use Atldays\Sculptor\Concerns\QueryResultCount;
-use Atldays\Sculptor\Concerns\QueryResultExists;
-use Atldays\Sculptor\Concerns\QueryResultFirstOrFail;
-
-#[ForModel(User::class)]
-class RequiredUserQuery extends CachedQuery
-{
-    use QueryResultFirstOrFail;
-}
-
-#[ForModel(User::class)]
-class UsersExistQuery extends CachedQuery
-{
-    use QueryResultExists;
-}
-
-#[ForModel(User::class)]
-class UserCountQuery extends CachedQuery
-{
-    use QueryResultCount;
-}
-
-$user = RequiredUserQuery::result();
-$exists = UsersExistQuery::result();
-$count = UserCountQuery::result();
-```
-
-Add conditions through filters or `query()` as with other query objects. `QueryResultFirstOrFail` preserves Laravel's `ModelNotFoundException`, including the model class. `QueryResultSole` uses `sole()`: zero rows throw `ModelNotFoundException`, and two or more rows throw `MultipleRecordsFoundException`. It checks up to two rows even if `limit(1)` is configured. `CachedQuery` does not store thrown exceptions. `BuilderCachedQuery` may cache the underlying empty or duplicate selection, so subsequent calls still throw until that entry expires or is invalidated.
-
-### Column Values, Pluck, and Aggregates
-
-Use `#[ResultColumn]` to configure the result column for these three traits. `#[PluckKey]` optionally provides collection keys, and `#[Aggregate]` specifies the aggregate function:
-
-```php
-use App\Models\Product;
-use Atldays\Sculptor\Attributes\Aggregate;
-use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\Attributes\PluckKey;
-use Atldays\Sculptor\Attributes\ResultColumn;
-use Atldays\Sculptor\CachedQuery;
-use Atldays\Sculptor\Concerns\QueryResultAggregate;
-use Atldays\Sculptor\Concerns\QueryResultPluck;
-use Atldays\Sculptor\Concerns\QueryResultValue;
-use Atldays\Sculptor\Enums\AggregateFunction;
-use Atldays\Sculptor\Query;
-
-#[ForModel(Product::class)]
-#[ResultColumn('products.price')]
-class FirstProductPriceQuery extends Query
-{
-    use QueryResultValue;
-}
-
-#[ForModel(Product::class)]
-#[ResultColumn('products.name')]
-#[PluckKey('products.id')]
-class ProductNamesQuery extends CachedQuery
-{
-    use QueryResultPluck;
-}
-
-#[ForModel(Product::class)]
-#[ResultColumn('products.price')]
-#[Aggregate(AggregateFunction::Sum)]
-class TotalProductPriceQuery extends CachedQuery
-{
-    use QueryResultAggregate;
-}
-
-$price = FirstProductPriceQuery::result();
-$namesById = ProductNamesQuery::result();
-$total = TotalProductPriceQuery::result();
-
-$names = ProductNamesQuery::make()->withPluckKey(null)->limit(20)->effect();
-$average = TotalProductPriceQuery::make()->withAggregateFunction('avg')->effect();
-$largestId = TotalProductPriceQuery::make()
-    ->withResultColumn('products.id')
-    ->withAggregateFunction(AggregateFunction::Max)
-    ->effect();
-```
-
-The attributes are inherited. Runtime overrides take precedence and apply to that instance:
-
-- `withResultColumn(string|Expression $column)` overrides the column.
-- `withPluckKey(string|Expression|null $key)` overrides the collection key; `null` explicitly disables an attribute-defined key.
-- `withAggregateFunction(AggregateFunction|string $function)` accepts `sum`, `avg`, `min`, or `max`, case-insensitively.
-- `resultColumn()`, `pluckKey()`, and `aggregateFunction()` return the effective configuration.
-
-The result column is required. `QueryResultAggregate` also requires a function. Missing settings, blank column/key strings, and unsupported function names throw `InvalidArgumentException`.
-
-For `Value` and `Pluck`, the result column and key define the effective `SELECT`, including when a query has `#[Select]`, `withSelect()`, or custom selections. Filters, joins, ordering, and limits remain in effect. Eager loading is disabled for these projections. Eloquent casts, accessors, and date conversion retain native Laravel behavior. Expressions and aliases follow the installed Laravel version's semantics.
-
-Aggregates preserve Laravel's selection, `distinct`, grouping, `having`, and limit semantics. A grouped aggregate returns Laravel's scalar result. Results keep the database driver's types: exact decimal strings are preserved, with no additional conversion to `float`. Empty sums return Laravel's zero; empty averages, minima, and maxima return `null`.
-
-All three traits support both cache strategies. Keys include the result column, optional pluck key, and aggregate function, so runtime overrides produce independent entries. `CachedQuery` caches `null` as a result, including a missing first record or a nullable column; it remains cached until expiration or invalidation. The existing cache bypass, tags, locking rules, and execution events apply to these traits as well.
-
-### Execution API
-
-- `::make(...$arguments)` resolves the query object through the container
-- `->effect()` executes the query object
-- `::result(...$arguments)` instantiates and executes in one call
-
-### Query Execution Event
-
-Every `::result()` call dispatches `Atldays\Sculptor\Events\ResultExecuted`.
-
-This includes cache hits and calls that throw an exception. Calling `->effect()` directly does not dispatch this event.
-
-The event contains:
-
-- the query class name
-- the execution start time
-- the execution finish time
-- the execution duration in milliseconds through `duration()`
-
-## Pagination
-
-Sculptor treats pagination as a separate result type, just like collections and single-model results.
-
-Use:
-
-- `QueryResultPaginated` for Laravel's `paginate()`
-- `QueryResultSimplePaginated` for `simplePaginate()`, without a total count query
-- `QueryResultCursorPaginated` for `cursorPaginate()`, without offsets or a total count query
-
-Example:
-
-```php
-<?php
-
-namespace App\Queries\Post;
-
-use App\Models\Post;
-use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\Concerns\QueryResultPaginated;
-use Atldays\Sculptor\Contracts\WithPaginatedResult;
-use Atldays\Sculptor\Query;
-
-#[ForModel(Post::class)]
-class PaginatedPostsQuery extends Query implements WithPaginatedResult
-{
-    use QueryResultPaginated;
-}
-```
-
-`QueryResultPaginated` and `QueryResultSimplePaginated` require `WithPaginatedResult`.
-
-Runtime pagination helpers:
-
-- `perPage(int $perPage)`
-- `page(int $page)`
-- `pageName(string $pageName)`
-- `paginationColumns(string|array $columns)`
-
-Usage:
-
-```php
-$posts = PaginatedPostsQuery::make()
-    ->perPage(15)
-    ->page(2)
-    ->effect();
-```
-
-If your query object also accepts constructor arguments, keep those arguments on `make()` and use the pagination helpers for paginator state:
-
-```php
-$posts = ProductsByRegionQuery::make(region: 'eu')
-    ->perPage(15)
-    ->page(2)
-    ->effect();
-```
-
-When `page()` is not called, Laravel resolves the current page through its paginator resolver, which normally reads the current request query string. When `perPage()` is not called, Eloquent falls back to the model's paginator size through `getPerPage()`.
-
-Pagination also works with `CachedQuery` and `BuilderCachedQuery` (with a `QueryCacheable` model). `CachedQuery` caches the paginator result: the resolved current page, effective page size, page name, columns, and base URL for pagination links are included in its key. Different pages and URLs are cached independently, including when Laravel resolves the page from the current request. Resolving request defaults does not change the query object's pagination settings. `BuilderCachedQuery` caches the underlying SQL results and creates a fresh paginator on each call, including its current link options.
-
-Non-default `paginationColumns()` replaces the query's select list for that execution. The default `['*']` keeps the query's configured select list. This applies to all three pagination traits. Pagination uses Laravel's page-size semantics; `limit()` does not cap a page.
-
-For cursor pagination, implement `WithCursorPaginatedResult`:
-
-```php
-use App\Models\Post;
-use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\CachedQuery;
-use Atldays\Sculptor\Concerns\QueryResultCursorPaginated;
-use Atldays\Sculptor\Contracts\WithCursorPaginatedResult;
-
-#[ForModel(Post::class)]
-class CursorPostsQuery extends CachedQuery implements WithCursorPaginatedResult
-{
-    use QueryResultCursorPaginated;
-}
-
-$page = CursorPostsQuery::make()
-    ->perPage(15)
-    ->cursorName('posts_cursor')
-    ->cursor($encodedCursor) // Laravel Cursor instance, encoded string, or null
-    ->effect();
-
-$next = $page->nextCursor()?->encode();
-```
-
-When no cursor is configured (or `cursor(null)` is used), Laravel resolves it from the current request using `cursorName()`. Use `cursor('')` to explicitly select the first page. Invalid encoded strings follow Laravel's behavior and select the first page. The cursor's parameters and direction, page size, cursor name, columns, and base URL participate in the result cache key. A cursor object and its encoded string share the same entry. `cursorPaginationData()` exposes configured settings without resolving request defaults.
-
-Use a stable, unique ordering for cursor pagination (for example, a timestamp followed by the primary key). Eloquent orders by the primary key when no ordering is supplied. Include every ordering column in the selected columns. Laravel's restrictions on nullable ordering columns, expressions, and cursor parameters still apply.
-
-Paginator instances returned from result cache are cloned so changing their link options (`appends`, `fragment`, `withPath`) does not alter subsequent cache reads. Items retain the normal model/collection cache semantics. All new results support tags, `withoutCache()`, and non-positive TTL bypass. Locks and write-PDO reads bypass both cache strategies.
-
-Use the dedicated pagination methods for page state. Constructor arguments should represent business input such as tenant, region, status, or date range, not paginator state.
+Cursor queries provide `perPage()`, `cursor(Cursor|string|null)`, `cursorName()`, `paginationColumns()`, and `cursorPaginationData()`. With no explicit cursor, or with `null`, Laravel resolves it from the request; `cursor('')` explicitly starts at the first page. Encoded strings and their equivalent `Cursor` objects share the same cache identity, including navigation direction. For caching, the same trait works with either cached preset.
 
 ## Caching
 
-Sculptor supports two cache strategies.
+Choose a strategy according to what you want to reuse. Both support all 13 result traits, TTL attributes, runtime bypass, manual tags, and automatic cache scopes.
 
-### CachedQuery
+| Strategy | What is cached | When to choose it |
+| --- | --- | --- |
+| `CachedQuery` | The completed model, collection, scalar, or paginator result | Cache a query object without changing its Eloquent models |
+| `BuilderCachedQuery` | Database query results, with cacheable eager-loaded relations | Integrate with [Laravel Eloquent Query Cache](https://github.com/atldays/laravel-eloquent-query-cache) |
 
-`CachedQuery` caches the result of the query object through Laravel cache.
+For builder caching, add `Atldays\QueryCache\Traits\QueryCacheable` to the queried model and to related models whose queries should be cached. The preset validates support on the queried model. To switch the pagination example to builder caching, extend `BuilderCachedQuery`; keep the same result trait, attributes, and invalidation calls. Result caching works with ordinary Eloquent models and controls caching itself, even when those models support builder caching.
 
-It does not require a custom Eloquent query builder or a special trait on the model.
+Use a **tag-capable cache store**, such as Redis. Unsupported stores throw; Sculptor never falls back to clearing the entire store. Publish configuration when you need to change the package default:
 
-```php
-<?php
-
-namespace App\Queries\Post;
-
-use App\Models\Post;
-use Atldays\Sculptor\Attributes\CacheStore;
-use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\Attributes\Limit;
-use Atldays\Sculptor\Attributes\WithRelations;
-use Atldays\Sculptor\CachedQuery;
-use Atldays\Sculptor\Concerns\QueryResultCollection;
-
-#[CacheStore('array')]
-#[ForModel(Post::class)]
-#[WithRelations(['author'])]
-#[Limit(10)]
-class CachedPublishedPostsQuery extends CachedQuery
-{
-    use QueryResultCollection;
-
-    public function __construct()
-    {
-        $this
-            ->setCacheFor(300)
-            ->setCacheTags('posts', 'published');
-    }
-}
+```bash
+php artisan vendor:publish --tag=sculptor-config
 ```
 
-Use this when you want simple query-object-level caching and do not need deep builder integration.
+Set `SCULPTOR_CACHE_STORE=redis` to select the package default. The published `sculptor.cache_store` setting falls back to `CACHE_STORE` / `CACHE_DRIVER` when that variable is absent. Class-level store attributes can select a different store for a query. Inspect its effective configuration with `cacheFor()`, `cacheStore()`, `cacheTags()`, and the static `cacheBaseTag()`.
 
-### BuilderCachedQuery
+### Duration and Bypass
 
-`BuilderCachedQuery` integrates with `atldays/laravel-eloquent-query-cache`.
-
-Use this only when your model already uses the query-cache package integration and returns a cache-aware query builder.
+`#[CacheFor(600)]` defines a ten-minute default. Runtime settings apply to that instance:
 
 ```php
-<?php
+$query = PaginatedPostsForUser::make(userId: 42);
 
-namespace App\Queries\Post;
-
-use App\Models\Post;
-use Atldays\Sculptor\Attributes\CacheStore;
-use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\Attributes\Limit;
-use Atldays\Sculptor\Attributes\WithRelations;
-use Atldays\Sculptor\BuilderCachedQuery;
-use Atldays\Sculptor\Concerns\QueryResultCollection;
-
-#[CacheStore('redis')]
-#[ForModel(Post::class)]
-#[WithRelations(['author'])]
-#[Limit(10)]
-class BuilderCachedPostsQuery extends BuilderCachedQuery
-{
-    use QueryResultCollection;
-
-    public function __construct()
-    {
-        $this
-            ->setCacheFor(300)
-            ->setCacheTags('posts');
-    }
-}
+$posts = $query->setCacheFor(30)->effect();
+$freshPosts = $query->withoutCache()->effect();
+$cachedPosts = $query->withoutCache(false)->effect();
 ```
 
-If the model is not configured for the query-cache package, this mode fails intentionally.
+Priority is: `withoutCache(true)` → explicit `setCacheFor(int|DateTime)` → nearest `#[CacheFor]` → `3600` seconds. Zero or negative TTL also bypasses reads and writes. A positive TTL restores caching unless the explicit bypass is still active. Changing TTL does not clear `withoutCache()`.
 
-## Cache Configuration
+Bypass preserves existing entries and the configured TTL, including eager-loaded relation cache settings in builder mode. TTL changes affect subsequent writes; existing entries retain their original expiration. Locked queries (`lockForUpdate()`, `sharedLock()`, or custom string locks) and explicit `useWritePdo()` reads bypass caching. Use a transaction when database locks must protect subsequent work.
 
-Available cache helpers:
+Both strategies cache `null`, `false`, zero, and empty collections. Native lookup exceptions propagate and are not cached. Keys distinguish result operations and projection parameters, so value, pluck, and aggregate reads do not collide.
 
-- `setCacheFor(int|DateTime $time)`
-- `withoutCache(bool $withoutCache = true)`
-- `setCacheTags(string ...$tags)`
-- `mergeCacheTags(string ...$tags)`
-- `cacheTags()`
-- `cacheBaseTag()`
-- `cache()`
-- `cacheStore()`
-- `getCache()`
-- `flushBaseCache()`
-- `flushCacheTags(string|Stringable $tag, string|Stringable ...$tags)`
-- `flushScope(...$arguments)`
+### Invalidate by Constructor Arguments
 
-Cache durations are measured in seconds and default to one hour. Use the class-level `#[CacheFor(600)]` attribute for a declarative default, or `setCacheFor()` for a runtime override. To execute a query without reading or writing cache entries, use `withoutCache()`. This also bypasses eager loaded relation caches in `BuilderCachedQuery`:
+`#[CacheScope]` lets you invalidate the same domain inputs you pass to a query, without managing tag strings. For the two marked parameters in `PaginatedPostsForUser`:
 
 ```php
-$posts = CachedPublishedPostsQuery::make()
-    ->withoutCache()
-    ->effect();
+// Only this user's published results, across all pages and page sizes.
+PaginatedPostsForUser::flushScope(userId: 42, status: 'published');
+
+// Every status and every page for user 42. Other users stay cached.
+PaginatedPostsForUser::flushScope(userId: 42);
+
+// Published results for all users of this query class.
+PaginatedPostsForUser::flushScope(status: 'published');
+
+// Only entries whose status scope is null; omission means any status.
+PaginatedPostsForUser::flushScope(userId: 42, status: null);
+
+// All entries belonging to this query class.
+PaginatedPostsForUser::flushBaseCache();
 ```
 
-This setting applies to that query instance and preserves its configured cache duration and existing entries. Call `withoutCache(false)` to restore caching for the instance. Changing the duration with `setCacheFor()` does not clear the explicit bypass setting.
+Supplied arguments match **together**; omitted marked arguments are wildcards, even if their constructor parameters are required or have defaults. Explicit `null` matches only `null`. Mark only the parameters you want to use for invalidation: an unmarked status can still filter SQL, while a marked `userId` groups all that user's statuses.
 
-A zero or negative duration in `#[CacheFor]` or passed to `setCacheFor()` also disables cache reads and writes. Setting a positive duration restores caching when `withoutCache()` is not active. Existing entries remain available until they expire or are invalidated.
+Scopes cover matching pages, page sizes, projections, and filters, including pagination totals and cacheable relations in builder mode. They are local to the concrete query class and selected store. Invalidating a scope does not construct the query or execute query SQL. Call invalidation explicitly after application writes; Sculptor does not infer domain invalidation from model changes.
 
-Both cache strategies support every result trait, including cached `false`, `0`, and empty collections. Result-cache keys include the result operation as well as the query shape.
+At least one marked argument is required. Prefer named arguments; positional arguments follow the order of marked parameters, skipping unmarked dependencies. Unknown or unmarked arguments, duplicate assignments, and invalid supplied types raise `InvalidArgumentException` before store access. No scope definition raises `LogicException`. Store failures propagate and boolean flush results are returned.
 
-Queries with `lockForUpdate()`, `sharedLock()`, or a custom string lock bypass cache reads and writes. This also applies when a global scope or a `beforeQuery` callback adds the lock. Explicit `useWritePdo()` queries bypass the result cache as well. Existing entries are preserved. For database locks to cover subsequent work, execute the query inside the appropriate Laravel transaction.
+<details>
+<summary>Scope identities, tag count, and upgrade behavior</summary>
 
-`CachedQuery` uses one prepared builder for its cache key and execution. Global scopes and before-query callbacks run once per execution, including cache hits, so they can affect both the key and the decision to bypass caching.
+Each entry receives a full-scope tag plus a tag for every other non-empty subset. Two marked fields produce three scope tags: `userId`, `status`, and `(userId, status)`. Their values and parameter names are normalized and hashed with the concrete query class; these are internal tags, not strings applications should construct. The class's base tag and any manual tags are also retained.
 
-The base cache tag contains the fully qualified query class name, for example `sculptor:App\Queries\Post\CachedPublishedPostsQuery`. Query classes with the same short name in different namespaces have independent base tags. Entries written with the previous short-name tag format remain under their original TTL and are no longer read by the updated query class.
+For `n` marked parameters, there are `2^n - 1` scope tags per entry. Keep marked parameters focused. Constructor arguments that only filter the query can remain unmarked.
 
-### Cache Duration Attribute
+Supported values are strings, integers, booleans, finite floats, `null`, unit/backed enums, Eloquent models, and `CacheScopeKey` objects. Types are preserved: `42` and `'42'` differ when the parameter permits both. Pass the enum instance rather than its backing string. Invalidation validates declared types without weak scalar coercion; integer-to-float widening follows PHP. Arrays, arbitrary objects (including plain `Stringable`), resources, `NAN`, and infinite floats are rejected.
 
-Declare the default TTL on a query class:
+Only promoted constructor parameters can carry `#[CacheScope]`. Inherited constructors retain their scopes, including private promoted properties. A replacement constructor must declare its own scopes. Invalid declarations or uninitialized scope properties raise `LogicException`.
 
-```php
-use App\Models\Post;
-use Atldays\Sculptor\Attributes\CacheFor;
-use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\CachedQuery;
-use Atldays\Sculptor\Concerns\QueryResultAll;
+**Upgrading from exact-only scopes:** old composite entries lack subset tags. Run `YourQuery::flushBaseCache()` once for affected classes before relying on partial invalidation. Full tuple invalidation still works on old entries when all marked values are supplied explicitly. Single-parameter scopes keep their original tag set.
 
-#[ForModel(Post::class)]
-#[CacheFor(600)]
-class CachedPostsQuery extends CachedQuery
-{
-    use QueryResultAll;
-}
-```
+</details>
 
-Duration settings have the following priority, highest first:
+### Models and Custom Scope Values
 
-1. `withoutCache(true)` disables reads and writes regardless of the configured TTL.
-2. An explicit `setCacheFor(int|DateTime)` value overrides the attribute, including calls in constructors and an explicit `setCacheFor(3600)`.
-3. The nearest `#[CacheFor]` class attribute supplies the default in seconds. A child inherits its parent's attribute unless it declares its own.
-4. Without an attribute or runtime override, the TTL is `3600` seconds.
-
-```php
-$query = CachedPostsQuery::make();                  // 600 seconds
-$query->setCacheFor(30);                            // 30 seconds
-$query->withoutCache();                            // Bypass cache
-$query->setCacheFor(new DateTime('+10 minutes'));   // Bypass remains active
-$query->withoutCache(false);                       // Use that DateTime expiration
-```
-
-The attribute accepts an integer number of seconds, including zero and negative values to disable caching. A positive runtime override can enable a query whose attribute disables caching, provided `withoutCache()` is not active. Disabling and restoring the bypass preserves the latest runtime expiration or the attribute default. Remove constructor calls to `setCacheFor()` if the attribute should control that query's TTL.
-
-Both `CachedQuery` and `BuilderCachedQuery` use this precedence, including builder-cached eager-loaded relations. `#[CacheFor]` works alongside `#[CacheScope]`, store attributes, manual tags, and both invalidation methods. TTL changes apply to subsequent writes; existing entries retain their original expiration until they expire or are invalidated.
-
-### Custom Cache Tags
-
-Custom tags are useful when the same query class can produce multiple cached result groups.
-
-For example, when a query depends on constructor arguments such as tenant, status, region, or another runtime scope, you can attach additional tags and later invalidate that group explicitly.
-
-```php
-<?php
-
-namespace App\Queries\Post;
-
-use App\Models\Post;
-use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\Attributes\Limit;
-use Atldays\Sculptor\CachedQuery;
-use Atldays\Sculptor\Concerns\QueryResultCollection;
-
-#[ForModel(Post::class)]
-#[Limit(10)]
-class PaginatedPublishedPostsQuery extends CachedQuery
-{
-    use QueryResultCollection;
-
-    public function __construct(public readonly string $region)
-    {
-        $this
-            ->setCacheFor(300)
-            ->setCacheTags('posts', "region:{$this->region}");
-    }
-}
-```
-
-You can also add tags incrementally:
-
-```php
-$query = PaginatedPublishedPostsQuery::make(region: 'eu')
-    ->mergeCacheTags('tenant:acme');
-```
-
-To invalidate only a custom group, pass its tag explicitly:
-
-```php
-PaginatedPublishedPostsQuery::flushCacheTags('region:eu');
-```
-
-`getCache()` includes the base tag of the query class as well as its custom tags. Calling `getCache()->flush()` therefore invalidates the entire class and entries sharing any of those custom tags; it does not restrict invalidation to one region. Use `flushBaseCache()` to invalidate the class alone, or `flushCacheTags()` to invalidate explicitly selected groups.
-
-### Invalidate Explicit Cache Tags
-
-Assign domain tags when configuring queries, then use the same values when invalidating them:
-
-```php
-$query = UserProjectList::make(userId: 42)
-    ->mergeCacheTags('projects:user:42');
-
-$projects = $query->effect();
-
-UserProjectList::flushCacheTags('projects:user:42');
-
-UserProjectList::flushCacheTags(
-    'projects:user:42',
-    'projects:user:57',
-);
-
-AllProjectList::flushBaseCache(); // Invalidate the entire AllProjectList class.
-```
-
-`flushCacheTags()` invalidates entries carrying **any** supplied tag: multiple tags form a union, not an intersection. It does not add the calling class's base tag or any other implicit tag. Other owners' entries remain cached even when they share the class's base tag, unless they also carry one of the explicitly supplied tags.
-
-The calling class selects the cache store through the existing package configuration and inherited `#[CacheStore]` / `#[CacheStoreFromConfig]` attributes. Invalidation is not limited to the calling class: a shared tag can invalidate multiple query classes, both cache strategies, and other Laravel cache entries using that tag in the same store namespace. Separately configured stores remain independent when their underlying cache namespaces are separate.
-
-The method requires at least one `string` or `Stringable` argument. Each argument is converted to a string once, and all tags are validated before accessing the store. An empty string, including one produced by `Stringable`, throws `InvalidArgumentException` before any invalidation occurs. Values such as `'0'` and `' '` are valid; whitespace, case, and prefixes are preserved exactly.
-
-The store's invalidation result is returned as a boolean, and store exceptions propagate to the caller. A store without cache-tag support throws Laravel's exception; Sculptor never falls back to flushing the entire store. The query is not instantiated, so static invalidation works with required constructor arguments and executes no query SQL.
-
-`CachedQuery` and `BuilderCachedQuery` implement the optional `Atldays\Sculptor\Contracts\WithCacheTagInvalidation` interface, which extends `WithCache` and declares `flushCacheTags()`. Existing `WithCache`, `WithResultCache`, and `WithBuilderCache` contracts are unchanged. Classes composing `HasCache` directly can opt into the new interface explicitly.
-
-Domain tag names and application helpers such as `flushForUser()` belong to your application. Sculptor does not infer tags from SQL or domain identifiers. `flushBaseCache()` keeps its existing behavior: invalidating all entries carrying the calling class's base tag.
-
-### Automatic Cache Scopes
-
-Use `#[CacheScope]` on promoted constructor parameters to group cached results without writing tag strings. All marked parameters form **one composite group**; unmarked parameters can affect the query without splitting that group.
-
-```php
-use App\Models\Project;
-use Atldays\Sculptor\Attributes\CacheFor;
-use Atldays\Sculptor\Attributes\CacheScope;
-use Atldays\Sculptor\Attributes\CacheStore;
-use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\CachedQuery;
-use Atldays\Sculptor\Concerns\QueryResultAll;
-use Illuminate\Contracts\Database\Eloquent\Builder;
-
-#[ForModel(Project::class)]
-#[CacheStore('redis')]
-#[CacheFor(600)]
-class UserProjectList extends CachedQuery
-{
-    use QueryResultAll;
-
-    public function __construct(
-        #[CacheScope] private readonly int $userId,
-        private readonly ?string $status = null,
-    ) {}
-
-    public function query(): Builder
-    {
-        $query = parent::query()->where('user_id', $this->userId);
-        if ($this->status !== null) {
-            $query->where('status', $this->status);
-        }
-
-        return $query->orderByDesc('id');
-    }
-}
-
-UserProjectList::make(userId: 42, status: 'active')->effect();
-UserProjectList::make(userId: 42, status: 'archived')->effect();
-
-// Both status variants are invalidated; user 57 remains cached.
-UserProjectList::flushScope(userId: 42);
-```
-
-The generated tag includes the concrete query class and normalized marked values. It is appended to the query's manual tags and base tag. Result keys still distinguish SQL, bindings, projections, limits, and pagination settings; the scope groups their entries for invalidation. With `BuilderCachedQuery`, the scope also applies to cacheable eager-loaded relations. Both `new Query(...)` and `Query::make(...)` are supported.
-
-Automatic scopes are class-local: two different query classes with identical arguments have different scope tags. Use manual shared domain tags with `flushCacheTags()` when invalidation should span query classes. `flushBaseCache()` still invalidates all scopes of the calling class. The generated tag format is internal and should not be constructed manually.
-
-For a narrower group, mark all its identifying parameters:
-
-```php
-public function __construct(
-    #[CacheScope] private readonly int $tenantId,
-    #[CacheScope] private readonly int $userId,
-    #[CacheScope] private readonly ?string $status = null,
-) {}
-
-UserProjectList::flushScope(tenantId: 7, userId: 42, status: 'active');
-```
-
-This matches the complete `(tenantId, userId, status)` tuple, rather than invalidating every matching tenant or user independently. Omitting `status` resolves its constructor default (`null`) and invalidates only that group; omitted optional values are not wildcards.
-
-`flushScope()` accepts only marked parameters. Named arguments are recommended and may be passed in any order. Positional arguments follow the declaration order of the **marked** parameters, skipping unmarked constructor dependencies. Unknown parameters (including unmarked parameters), duplicate assignments, missing required values, and invalid types throw `InvalidArgumentException` before accessing the store. A class without a scope definition throws `LogicException` instead of falling back to class-wide invalidation.
-
-Scope values support strings (including empty strings and `'0'`), integers, booleans, finite floats, `null`, unit or backed enum instances, Eloquent models, and objects implementing `CacheScopeKey`. Types are preserved: integer `42` and string `'42'` are distinct when both are allowed by the parameter type. Invalidation validates the declared parameter type without weak scalar coercion: pass `userId: 42` for an `int` parameter, not `userId: '42'`. Integer-to-float widening follows PHP's constructor behavior. Pass the enum instance, not its backing string. Arrays, arbitrary objects (including plain `Stringable` and services without `CacheScopeKey`), resources, `NAN`, and infinite floats are rejected. For other objects, implement `CacheScopeKey` or pass a stable scalar identifier. The same normalization is used for writing and invalidating entries.
-
-Only promoted constructor parameters can be marked, so their values remain available without intercepting construction or resolving services. Inherited constructors retain their scopes, including private promoted properties. A replacement constructor must declare its own marked promoted parameters. Misconfigured or uninitialized scope properties throw `LogicException`.
-
-`flushScope()` reads constructor metadata and supplied values without constructing the query or performing query SQL. It uses the configured cache store through `flushCacheTags()`, returning the store's boolean result and propagating its exceptions. The optional `Atldays\Sculptor\Contracts\WithCacheScopeInvalidation` contract extends `WithCacheTagInvalidation`; both cached presets implement it. Existing cache contracts remain unchanged. Queries without `#[CacheScope]` retain their previous tags and cache behavior.
-
-### Scope Resolver
-
-Internally, both cache strategies use the object-based `Atldays\Sculptor\Support\CacheScopeResolver`. Its factory accepts an existing query or a class name, following the `AttributeReader::make(...)` pattern:
-
-```php
-use Atldays\Sculptor\Support\CacheScopeResolver;
-
-$query = UserProjectList::make(userId: 42);
-$tag = CacheScopeResolver::make($query)->tag();
-
-$tagFromArguments = CacheScopeResolver::make(UserProjectList::class)
-    ->tagForArguments(['userId' => 42]);
-```
-
-The resolver retains constructor parameter metadata, reading current property values, model identities and custom keys on each resolution. It can be reused without retaining previous argument values or memoizing a tag. Creating a class-based resolver and calling `tagForArguments()` never constructs the query. `tag()` requires an object and returns `null` for queries without marked parameters; calling it on a class-only context throws `LogicException`.
-
-The generated scope tags are identical to those produced by the previous static implementation, so `flushScope()` can still invalidate existing entries. The resolver remains an internal helper in `Support`: applications should normally use query methods such as `flushScope()` and `cacheTags()`.
-
-### Attribute Reader
-
-`Atldays\Sculptor\Support\AttributeReader` reads class attributes from an object or a class name. It returns the nearest matching attribute instance, searching parent classes when necessary, or `null` if the attribute is absent:
-
-```php
-use Atldays\Sculptor\Attributes\CacheFor;
-use Atldays\Sculptor\Support\AttributeReader;
-
-$attribute = AttributeReader::make(UserProjectList::class)->get(CacheFor::class);
-$seconds = $attribute?->seconds();
-```
-
-The previous `Atldays\Sculptor\Attributes\Helpers\AttributeReader` namespace remains available as a deprecated compatibility class that inherits the implementation from `Support`. Its constructor and `make()` factory remain supported. Use the `Support` namespace in new code.
-
-### Eloquent Model Scopes
-
-An Eloquent model can be a marked constructor argument:
+A model parameter can identify a scope directly. In your query constructor:
 
 ```php
 public function __construct(
     #[CacheScope] private readonly User $user,
-    private readonly ?string $status = null,
 ) {}
-
-public function query(): Builder
-{
-    $query = parent::query()->where('user_id', $this->user->getKey());
-    if ($this->status !== null) {
-        $query->where('status', $this->status);
-    }
-
-    return $query->orderByDesc('id');
-}
-
-UserProjectList::make(user: $user)->effect();
-UserProjectList::flushScope(user: $user);
-
-// A different instance representing the same record identifies the same group.
-$sameUser = clone $user;
-UserProjectList::flushScope(user: $sameUser);
 ```
 
-Model identity consists of the concrete model class, connection name, and the primary key returned by `getKey()` (including its integer/string type). An implicit connection uses the Eloquent resolver's current default connection name, matching a model with that connection set explicitly. No database connection is opened or record fetched by normalization. Different model classes, connection names, or keys identify different groups.
-
-Non-key attributes, dirty values, loaded relations, and the `exists` flag do not participate in identity. Model objects and their full attribute arrays are not serialized into scope tags. A model with a null or non-integer/non-string key throws `InvalidArgumentException` before cache access; select its primary key when loading it. UUID/string keys and zero-valued keys are supported. Normalization does not verify record existence: keyed references and deleted model instances remain usable for invalidation.
-
-For example, after deleting an owner and its projects, the retained owner instance can still invalidate its old group:
+Use `$this->user->getKey()` when building the query, then pass a model instance to both creation and invalidation:
 
 ```php
-UserProjectList::flushScope(user: $deletedUser);
+$query = UserPosts::make(user: $user);
+UserPosts::flushScope(user: $user);
 ```
 
-Always pass a model matching the declared constructor type; an integer ID is not interchangeable with a model scope. Scope invalidation remains explicit: changing a model's attributes does not itself call `flushScope()`. If a model's primary key or connection changes, invalidate the old identity as well as the new one. In applications switching databases behind one connection name, include a separate tenant scope parameter or use a custom key containing that tenant identity.
+The identity is the **concrete model class, connection name, and primary key**, including integer/string key type. Two instances of the same record share a scope; attributes, dirty state, loaded relations, and the `exists` flag do not affect it. Models are not serialized into tags. Normalization does not open a database connection or load the record.
 
-### Custom Scope Keys for Data Objects
+Keys must be non-null integers or strings; UUIDs and zero are supported. Keyed references and deleted model instances remain valid. An implicit connection uses the current default connection name. When switching tenants behind one connection name, add a tenant scope or a custom identity. Pass the constructor's model type, not an interchangeable scalar ID, and invalidate old identities if keys or connections change.
 
-Implement `Atldays\Sculptor\Contracts\CacheScopeKey` to define a stable string component of a scope:
+For data objects, implement `Atldays\Sculptor\Contracts\CacheScopeKey`:
 
 ```php
 use Atldays\Sculptor\Contracts\CacheScopeKey;
 
-final readonly class ProjectScopeData implements CacheScopeKey
+final readonly class PostScopeData implements CacheScopeKey
 {
-    public function __construct(
-        public int $tenantId,
-        public int $userId,
-    ) {}
+    public function __construct(public int $tenantId, public int $userId) {}
 
     public function cacheScopeKey(): string
     {
-        return json_encode([$this->tenantId, $this->userId], JSON_THROW_ON_ERROR);
+        return json_encode(['posts', $this->tenantId, $this->userId], JSON_THROW_ON_ERROR);
     }
 }
 ```
 
-Mark that data object as a constructor parameter:
+Mark the promoted data-object parameter with `#[CacheScope]`, then pass equivalent objects to `make()` and `flushScope()`. Its string is a component of the hashed identity, not a literal tag for `flushCacheTags()`.
+
+Custom keys control their own namespace: the DTO class is deliberately excluded, while the query class, parameter names, and other marked values still participate. Use domain prefixes or structured encoding to distinguish unrelated custom identities. `CacheScopeKey` takes priority over built-in model/enum normalization. Its method must be deterministic and free of SQL or other I/O; it may run more than once. Exceptions propagate, and an empty component is allowed and distinct from `null` or an ordinary string scope.
+
+### Share Explicit Domain Tags
+
+Use manual tags when several query classes should be invalidated together:
 
 ```php
-public function __construct(
-    #[CacheScope] private readonly ProjectScopeData $context,
-) {}
+$query = PaginatedPostsForUser::make(userId: 42)
+    ->mergeCacheTags('posts:user:42');
 
-$query = UserProjectList::make(context: new ProjectScopeData(7, 42));
-$projects = $query->effect();
+$posts = $query->effect();
 
-UserProjectList::flushScope(context: new ProjectScopeData(7, 42));
+// Any query in this store carrying either tag is invalidated.
+PaginatedPostsForUser::flushCacheTags('posts:user:42', 'posts:user:57');
 ```
 
-The returned string is an identity component, not a literal Laravel cache tag. It is combined with the concrete query class and all other marked arguments, then hashed. It cannot be passed directly to `flushCacheTags()`. Scalar strings, models, enums, and custom components have separate type namespaces, so a custom key does not accidentally collide with an ordinary string argument.
+`setCacheTags(...)` replaces manual tags; `mergeCacheTags(...)` appends them. Automatic scope and base tags remain. Manual tags are application-defined; place shared defaults in your query constructor when every instance should use them.
 
-For custom components, the object's class is deliberately not added to the key: implementations control that namespace themselves. Two DTO classes returning the same component can identify the same group within a query when the constructor type accepts both (for example, `CacheScopeKey`). Use explicit domain prefixes or unambiguous structured encoding when keys belong to different object types. Automatic groups remain query-class-local; shared Laravel tags still provide cross-query invalidation.
+`flushCacheTags()` invalidates the **union** of entries carrying any supplied tag. It does not implicitly include the calling class's base tag. A shared tag can invalidate other query classes, either cache strategy, and tagged Laravel entries in the same backend namespace. Distinct configured store names only isolate data when their backend namespaces are separate.
 
-`CacheScopeKey` takes priority over built-in model or enum normalization when an object explicitly implements it. This lets an application define its own model identity policy. The contract also allows an empty string component, distinct from `null`; the final generated tag remains non-empty.
+At least one `string|Stringable` tag is required. Values are converted without trimming, case changes, or prefixes; empty strings are rejected before any store access. All tags are validated before invalidation. The method returns the store's boolean result and propagates errors, with no query construction, query SQL, or global-flush fallback.
 
-`cacheScopeKey()` must return a deterministic string based on the intended identity, with no SQL, service resolution, or mutable/time-dependent side effects. The method is evaluated during normalization for both caching and invalidation and may be evaluated more than once during query execution. Its exceptions propagate before cache invalidation. User-defined key methods and overridden model identity accessors are responsible for avoiding I/O; Sculptor does not load models or relations on their behalf.
-
-### Cache Store Attributes
-
-```php
-use Atldays\Sculptor\Attributes\CacheStore;
-
-#[CacheStore('redis')]
-class CachedUsersQuery extends CachedQuery
-{
-    // ...
-}
-```
-
-Or resolve the store from configuration:
-
-```php
-use Atldays\Sculptor\Attributes\CacheStoreFromConfig;
-
-#[CacheStoreFromConfig('services.cache.queries_store', 'redis')]
-class CachedUsersQuery extends CachedQuery
-{
-    // ...
-}
-```
-
-### Flush Query Cache
-
-Flush the base cache for a query class:
-
-```php
-CachedPublishedPostsQuery::flushBaseCache();
-```
-
-Or through Artisan:
+`flushBaseCache()` invalidates every entry carrying the calling class's fully qualified base tag. You can also run:
 
 ```bash
-php artisan sculptor:flush-cache "App\\Queries\\Post\\CachedPublishedPostsQuery"
+php artisan sculptor:flush-cache 'App\Queries\Post\PaginatedPostsForUser'
 ```
 
-The command returns exit code `0` when the cache is flushed successfully and `1` when the query class is invalid or the cache store fails to flush.
+The command exits with `0` on success and `1` for an invalid query class or failed flush.
 
-## Choosing the Right Class
+## Extend and Observe
 
-Use `BaseQuery` when:
+The presets compose public traits. For most applications, start with a preset and choose a result trait; use these lower-level pieces for custom query bases:
 
-- you only want a plain query object
-- you do not need filters
-- you do not need cache
+| Concern (`Atldays\Sculptor\Concerns`) | Responsibility |
+| --- | --- |
+| `HasModel` | Model binding and model creation |
+| `HasQuery` | Selects, relations, limits, and builder creation |
+| `HasQueryWithFilters` | Query construction with composable filters |
+| `HasResult` | Container-backed `make()`, `result()`, and execution events |
+| `HasPagination` | Numbered pagination settings and `PaginationData` |
+| `HasCursorPagination` | Cursor settings and `CursorPaginationData` |
+| `HasResultColumn` | Projection-column defaults and overrides |
+| `HasPluckKey` | Pluck-key defaults and overrides |
+| `HasAggregateFunction` | Aggregate-operation defaults and overrides |
+| `HasCache` | TTL, tags, stores, scopes, and invalidation helpers |
+| `InteractsWithResultCache` | Result-cache execution |
+| `InteractsWithBuilderCache` | Builder-cache configuration |
+| `PreparesCacheableRelations` | Cache settings for eager-loaded relations |
 
-Use `Query` when:
+The 13 `QueryResult*` traits are listed in [Choose Your Result](#choose-your-result). When composing custom bases, implement the matching `Atldays\Sculptor\Contracts` interfaces as the presets do.
 
-- you want the default query object experience
-- you want filter support
-- you do not need cache
+Both cached presets implement the optional `WithCacheTagInvalidation` and `WithCacheScopeInvalidation` contracts. These extend the existing cache contracts without adding requirements to custom implementations of `WithCache`, `WithResultCache`, or `WithBuilderCache`.
 
-Use `CachedQuery` when:
+### Execution Events
 
-- you want filter support
-- you want cache
-- you do not want to depend on a cache-aware Eloquent builder
+`::result()` dispatches `Atldays\Sculptor\Events\ResultExecuted` for successful reads, cache hits, and exceptions. The event exposes `name`, `startedAt`, `finishedAt`, and `duration()` in milliseconds. Direct `->effect()` calls do not dispatch this event.
 
-Use `BuilderCachedQuery` when:
+<details>
+<summary>Attribute and scope utilities</summary>
 
-- you want filter support
-- you already use `atldays/laravel-eloquent-query-cache`
-- you want builder-level cache integration for the query and eager loaded relations
+`Atldays\Sculptor\Support\AttributeReader` reads the nearest matching class attribute from an object or class name:
 
-## Traits
+```php
+use App\Queries\Post\PaginatedPostsForUser;
+use Atldays\Sculptor\Attributes\CacheFor;
+use Atldays\Sculptor\Support\AttributeReader;
 
-If you need custom composition, the package also exposes low-level building blocks:
+$attribute = AttributeReader::make(PaginatedPostsForUser::class)->get(CacheFor::class);
+$seconds = $attribute?->seconds();
+```
 
-- `HasQuery`
-- `HasQueryWithFilters`
-- `HasCache`
-- `InteractsWithResultCache`
-- `InteractsWithBuilderCache`
-- `PreparesCacheableRelations`
-- `HasResult`
-- `QueryResultCollection`
-- `QueryResultAll`
-- `QueryResultFirst`
-- `QueryResultFirstOrFail`
-- `QueryResultSole`
-- `QueryResultExists`
-- `QueryResultCount`
-- `QueryResultValue`
-- `QueryResultPluck`
-- `QueryResultAggregate`
-- `QueryResultPaginated`
-- `QueryResultSimplePaginated`
-- `QueryResultCursorPaginated`
+The old `Atldays\Sculptor\Attributes\Helpers\AttributeReader` remains a deprecated compatibility class with its constructor and `make()` factory.
 
-For most applications, the preset classes are the best starting point. Compose these traits only when the preset classes do not fit your query object.
+Both cache strategies use the object-based `Atldays\Sculptor\Support\CacheScopeResolver`. Its internal API follows the same factory pattern:
 
-## Testing
+```php
+use Atldays\Sculptor\Support\CacheScopeResolver;
 
-Query objects are straightforward to test because they isolate read logic in dedicated classes.
+$query = PaginatedPostsForUser::make(userId: 42, status: 'published');
+$resolver = CacheScopeResolver::make($query);
 
-This package is tested across:
+$fullTag = $resolver->tag();
+$allScopeTags = $resolver->tags();
 
-- multiple Laravel versions
-- multiple PHP versions
-- plain queries
-- filters
-- result cache
-- builder cache integration
+$partialTag = CacheScopeResolver::make(PaginatedPostsForUser::class)
+    ->tagForInvalidation(['userId' => 42]);
+```
+
+`tag()` / `tags()` require an object and read its current values; no-scope queries return `null` / `[]`. Each resolution reads current model/custom identities without memoizing their values. On a class-only context these methods throw `LogicException`. `tagForArguments()` retains full tuple resolution with constructor defaults; `tagForInvalidation()` uses only supplied arguments. Neither constructs the query. Application code should normally use `flushScope()` and `cacheTags()`.
+
+</details>
+
+## Testing and Contributing
+
+Query classes give substantial reads a stable home and isolate their rules so they can be exercised against your application's database and fixtures. Sculptor's test suite covers plain queries, filters, result types, pagination, both cache strategies, and invalidation across supported PHP and Laravel versions, with PostgreSQL checks for precise aggregate types.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development requirements and verification commands, including formatting, PHPStan, PHPUnit, and Composer audit.
 
 ## License
 
-MIT
+[MIT](LICENSE.md)
