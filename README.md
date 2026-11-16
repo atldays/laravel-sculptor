@@ -264,6 +264,7 @@ You can apply the same pattern to cached query objects:
 namespace App\Queries\Product;
 
 use App\Models\Product;
+use Atldays\Sculptor\Attributes\CacheFor;
 use Atldays\Sculptor\Attributes\CacheStore;
 use Atldays\Sculptor\Attributes\ForModel;
 use Atldays\Sculptor\Attributes\Limit;
@@ -273,6 +274,7 @@ use Atldays\Sculptor\Concerns\QueryResultCollection;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 
 #[CacheStore('redis')]
+#[CacheFor(600)]
 #[ForModel(Product::class)]
 #[WithRelations(['brand', 'categories'])]
 #[Limit(20)]
@@ -284,9 +286,7 @@ class TrendingProductsQuery extends CachedQuery
         protected readonly string $region,
         protected readonly int $days = 7,
     ) {
-        $this
-            ->setCacheFor(600)
-            ->setCacheTags('products', "region:{$this->region}", "days:{$this->days}");
+        $this->setCacheTags('products', "region:{$this->region}", "days:{$this->days}");
     }
 
     public function query(): Builder
@@ -726,8 +726,10 @@ Available cache helpers:
 - `cacheStore()`
 - `getCache()`
 - `flushBaseCache()`
+- `flushCacheTags(string|Stringable $tag, string|Stringable ...$tags)`
+- `flushScope(...$arguments)`
 
-Cache durations are measured in seconds and default to one hour. To execute a query without reading or writing cache entries, use `withoutCache()`. This also bypasses eager loaded relation caches in `BuilderCachedQuery`:
+Cache durations are measured in seconds and default to one hour. Use the class-level `#[CacheFor(600)]` attribute for a declarative default, or `setCacheFor()` for a runtime override. To execute a query without reading or writing cache entries, use `withoutCache()`. This also bypasses eager loaded relation caches in `BuilderCachedQuery`:
 
 ```php
 $posts = CachedPublishedPostsQuery::make()
@@ -737,7 +739,7 @@ $posts = CachedPublishedPostsQuery::make()
 
 This setting applies to that query instance and preserves its configured cache duration and existing entries. Call `withoutCache(false)` to restore caching for the instance. Changing the duration with `setCacheFor()` does not clear the explicit bypass setting.
 
-A zero or negative duration passed to `setCacheFor()` also disables cache reads and writes. Setting a positive duration restores caching when `withoutCache()` is not active. Existing entries remain available until they expire or are invalidated.
+A zero or negative duration in `#[CacheFor]` or passed to `setCacheFor()` also disables cache reads and writes. Setting a positive duration restores caching when `withoutCache()` is not active. Existing entries remain available until they expire or are invalidated.
 
 Both cache strategies support every result trait, including cached `false`, `0`, and empty collections. Result-cache keys include the result operation as well as the query shape.
 
@@ -746,6 +748,44 @@ Queries with `lockForUpdate()`, `sharedLock()`, or a custom string lock bypass c
 `CachedQuery` uses one prepared builder for its cache key and execution. Global scopes and before-query callbacks run once per execution, including cache hits, so they can affect both the key and the decision to bypass caching.
 
 The base cache tag contains the fully qualified query class name, for example `sculptor:App\Queries\Post\CachedPublishedPostsQuery`. Query classes with the same short name in different namespaces have independent base tags. Entries written with the previous short-name tag format remain under their original TTL and are no longer read by the updated query class.
+
+### Cache Duration Attribute
+
+Declare the default TTL on a query class:
+
+```php
+use App\Models\Post;
+use Atldays\Sculptor\Attributes\CacheFor;
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\CachedQuery;
+use Atldays\Sculptor\Concerns\QueryResultAll;
+
+#[ForModel(Post::class)]
+#[CacheFor(600)]
+class CachedPostsQuery extends CachedQuery
+{
+    use QueryResultAll;
+}
+```
+
+Duration settings have the following priority, highest first:
+
+1. `withoutCache(true)` disables reads and writes regardless of the configured TTL.
+2. An explicit `setCacheFor(int|DateTime)` value overrides the attribute, including calls in constructors and an explicit `setCacheFor(3600)`.
+3. The nearest `#[CacheFor]` class attribute supplies the default in seconds. A child inherits its parent's attribute unless it declares its own.
+4. Without an attribute or runtime override, the TTL is `3600` seconds.
+
+```php
+$query = CachedPostsQuery::make();                  // 600 seconds
+$query->setCacheFor(30);                            // 30 seconds
+$query->withoutCache();                            // Bypass cache
+$query->setCacheFor(new DateTime('+10 minutes'));   // Bypass remains active
+$query->withoutCache(false);                       // Use that DateTime expiration
+```
+
+The attribute accepts an integer number of seconds, including zero and negative values to disable caching. A positive runtime override can enable a query whose attribute disables caching, provided `withoutCache()` is not active. Disabling and restoring the bypass preserves the latest runtime expiration or the attribute default. Remove constructor calls to `setCacheFor()` if the attribute should control that query's TTL.
+
+Both `CachedQuery` and `BuilderCachedQuery` use this precedence, including builder-cached eager-loaded relations. `#[CacheFor]` works alongside `#[CacheScope]`, store attributes, manual tags, and both invalidation methods. TTL changes apply to subsequent writes; existing entries retain their original expiration until they expire or are invalidated.
 
 ### Custom Cache Tags
 
@@ -786,15 +826,215 @@ $query = PaginatedPublishedPostsQuery::make(region: 'eu')
     ->mergeCacheTags('tenant:acme');
 ```
 
-Because `getCache()` returns the tagged Laravel cache repository for the query class, you can invalidate a custom group directly:
+To invalidate only a custom group, pass its tag explicitly:
 
 ```php
-PaginatedPublishedPostsQuery::make(region: 'eu')
-    ->getCache()
-    ->flush();
+PaginatedPublishedPostsQuery::flushCacheTags('region:eu');
 ```
 
-The final tag set always includes the base tag for the query class, so class-level invalidation through `flushBaseCache()` remains available.
+`getCache()` includes the base tag of the query class as well as its custom tags. Calling `getCache()->flush()` therefore invalidates the entire class and entries sharing any of those custom tags; it does not restrict invalidation to one region. Use `flushBaseCache()` to invalidate the class alone, or `flushCacheTags()` to invalidate explicitly selected groups.
+
+### Invalidate Explicit Cache Tags
+
+Assign domain tags when configuring queries, then use the same values when invalidating them:
+
+```php
+$query = UserProjectList::make(userId: 42)
+    ->mergeCacheTags('projects:user:42');
+
+$projects = $query->effect();
+
+UserProjectList::flushCacheTags('projects:user:42');
+
+UserProjectList::flushCacheTags(
+    'projects:user:42',
+    'projects:user:57',
+);
+
+AllProjectList::flushBaseCache(); // Invalidate the entire AllProjectList class.
+```
+
+`flushCacheTags()` invalidates entries carrying **any** supplied tag: multiple tags form a union, not an intersection. It does not add the calling class's base tag or any other implicit tag. Other owners' entries remain cached even when they share the class's base tag, unless they also carry one of the explicitly supplied tags.
+
+The calling class selects the cache store through the existing package configuration and inherited `#[CacheStore]` / `#[CacheStoreFromConfig]` attributes. Invalidation is not limited to the calling class: a shared tag can invalidate multiple query classes, both cache strategies, and other Laravel cache entries using that tag in the same store namespace. Separately configured stores remain independent when their underlying cache namespaces are separate.
+
+The method requires at least one `string` or `Stringable` argument. Each argument is converted to a string once, and all tags are validated before accessing the store. An empty string, including one produced by `Stringable`, throws `InvalidArgumentException` before any invalidation occurs. Values such as `'0'` and `' '` are valid; whitespace, case, and prefixes are preserved exactly.
+
+The store's invalidation result is returned as a boolean, and store exceptions propagate to the caller. A store without cache-tag support throws Laravel's exception; Sculptor never falls back to flushing the entire store. The query is not instantiated, so static invalidation works with required constructor arguments and executes no query SQL.
+
+`CachedQuery` and `BuilderCachedQuery` implement the optional `Atldays\Sculptor\Contracts\WithCacheTagInvalidation` interface, which extends `WithCache` and declares `flushCacheTags()`. Existing `WithCache`, `WithResultCache`, and `WithBuilderCache` contracts are unchanged. Classes composing `HasCache` directly can opt into the new interface explicitly.
+
+Domain tag names and application helpers such as `flushForUser()` belong to your application. Sculptor does not infer tags from SQL or domain identifiers. `flushBaseCache()` keeps its existing behavior: invalidating all entries carrying the calling class's base tag.
+
+### Automatic Cache Scopes
+
+Use `#[CacheScope]` on promoted constructor parameters to group cached results without writing tag strings. All marked parameters form **one composite group**; unmarked parameters can affect the query without splitting that group.
+
+```php
+use App\Models\Project;
+use Atldays\Sculptor\Attributes\CacheFor;
+use Atldays\Sculptor\Attributes\CacheScope;
+use Atldays\Sculptor\Attributes\CacheStore;
+use Atldays\Sculptor\Attributes\ForModel;
+use Atldays\Sculptor\CachedQuery;
+use Atldays\Sculptor\Concerns\QueryResultAll;
+use Illuminate\Contracts\Database\Eloquent\Builder;
+
+#[ForModel(Project::class)]
+#[CacheStore('redis')]
+#[CacheFor(600)]
+class UserProjectList extends CachedQuery
+{
+    use QueryResultAll;
+
+    public function __construct(
+        #[CacheScope] private readonly int $userId,
+        private readonly ?string $status = null,
+    ) {}
+
+    public function query(): Builder
+    {
+        $query = parent::query()->where('user_id', $this->userId);
+        if ($this->status !== null) {
+            $query->where('status', $this->status);
+        }
+
+        return $query->orderByDesc('id');
+    }
+}
+
+UserProjectList::make(userId: 42, status: 'active')->effect();
+UserProjectList::make(userId: 42, status: 'archived')->effect();
+
+// Both status variants are invalidated; user 57 remains cached.
+UserProjectList::flushScope(userId: 42);
+```
+
+The generated tag includes the concrete query class and normalized marked values. It is appended to the query's manual tags and base tag. Result keys still distinguish SQL, bindings, projections, limits, and pagination settings; the scope groups their entries for invalidation. With `BuilderCachedQuery`, the scope also applies to cacheable eager-loaded relations. Both `new Query(...)` and `Query::make(...)` are supported.
+
+Automatic scopes are class-local: two different query classes with identical arguments have different scope tags. Use manual shared domain tags with `flushCacheTags()` when invalidation should span query classes. `flushBaseCache()` still invalidates all scopes of the calling class. The generated tag format is internal and should not be constructed manually.
+
+For a narrower group, mark all its identifying parameters:
+
+```php
+public function __construct(
+    #[CacheScope] private readonly int $tenantId,
+    #[CacheScope] private readonly int $userId,
+    #[CacheScope] private readonly ?string $status = null,
+) {}
+
+UserProjectList::flushScope(tenantId: 7, userId: 42, status: 'active');
+```
+
+This matches the complete `(tenantId, userId, status)` tuple, rather than invalidating every matching tenant or user independently. Omitting `status` resolves its constructor default (`null`) and invalidates only that group; omitted optional values are not wildcards.
+
+`flushScope()` accepts only marked parameters. Named arguments are recommended and may be passed in any order. Positional arguments follow the declaration order of the **marked** parameters, skipping unmarked constructor dependencies. Unknown parameters (including unmarked parameters), duplicate assignments, missing required values, and invalid types throw `InvalidArgumentException` before accessing the store. A class without a scope definition throws `LogicException` instead of falling back to class-wide invalidation.
+
+Scope values support strings (including empty strings and `'0'`), integers, booleans, finite floats, `null`, unit or backed enum instances, Eloquent models, and objects implementing `CacheScopeKey`. Types are preserved: integer `42` and string `'42'` are distinct when both are allowed by the parameter type. Invalidation validates the declared parameter type without weak scalar coercion: pass `userId: 42` for an `int` parameter, not `userId: '42'`. Integer-to-float widening follows PHP's constructor behavior. Pass the enum instance, not its backing string. Arrays, arbitrary objects (including plain `Stringable` and services without `CacheScopeKey`), resources, `NAN`, and infinite floats are rejected. For other objects, implement `CacheScopeKey` or pass a stable scalar identifier. The same normalization is used for writing and invalidating entries.
+
+Only promoted constructor parameters can be marked, so their values remain available without intercepting construction or resolving services. Inherited constructors retain their scopes, including private promoted properties. A replacement constructor must declare its own marked promoted parameters. Misconfigured or uninitialized scope properties throw `LogicException`.
+
+`flushScope()` reads constructor metadata and supplied values without constructing the query or performing query SQL. It uses the configured cache store through `flushCacheTags()`, returning the store's boolean result and propagating its exceptions. The optional `Atldays\Sculptor\Contracts\WithCacheScopeInvalidation` contract extends `WithCacheTagInvalidation`; both cached presets implement it. Existing cache contracts remain unchanged. Queries without `#[CacheScope]` retain their previous tags and cache behavior.
+
+### Scope Resolver
+
+Internally, both cache strategies use the object-based `Atldays\Sculptor\Support\CacheScopeResolver`. Its factory accepts an existing query or a class name, following the `AttributeReader::make(...)` pattern:
+
+```php
+use Atldays\Sculptor\Support\CacheScopeResolver;
+
+$query = UserProjectList::make(userId: 42);
+$tag = CacheScopeResolver::make($query)->tag();
+
+$tagFromArguments = CacheScopeResolver::make(UserProjectList::class)
+    ->tagForArguments(['userId' => 42]);
+```
+
+The resolver retains constructor parameter metadata, reading current property values, model identities and custom keys on each resolution. It can be reused without retaining previous argument values or memoizing a tag. Creating a class-based resolver and calling `tagForArguments()` never constructs the query. `tag()` requires an object and returns `null` for queries without marked parameters; calling it on a class-only context throws `LogicException`.
+
+The generated scope tags are identical to those produced by the previous static implementation, so `flushScope()` can still invalidate existing entries. The resolver remains an internal helper in `Support`: applications should normally use query methods such as `flushScope()` and `cacheTags()`.
+
+### Eloquent Model Scopes
+
+An Eloquent model can be a marked constructor argument:
+
+```php
+public function __construct(
+    #[CacheScope] private readonly User $user,
+    private readonly ?string $status = null,
+) {}
+
+public function query(): Builder
+{
+    $query = parent::query()->where('user_id', $this->user->getKey());
+    if ($this->status !== null) {
+        $query->where('status', $this->status);
+    }
+
+    return $query->orderByDesc('id');
+}
+
+UserProjectList::make(user: $user)->effect();
+UserProjectList::flushScope(user: $user);
+
+// A different instance representing the same record identifies the same group.
+$sameUser = clone $user;
+UserProjectList::flushScope(user: $sameUser);
+```
+
+Model identity consists of the concrete model class, connection name, and the primary key returned by `getKey()` (including its integer/string type). An implicit connection uses the Eloquent resolver's current default connection name, matching a model with that connection set explicitly. No database connection is opened or record fetched by normalization. Different model classes, connection names, or keys identify different groups.
+
+Non-key attributes, dirty values, loaded relations, and the `exists` flag do not participate in identity. Model objects and their full attribute arrays are not serialized into scope tags. A model with a null or non-integer/non-string key throws `InvalidArgumentException` before cache access; select its primary key when loading it. UUID/string keys and zero-valued keys are supported. Normalization does not verify record existence: keyed references and deleted model instances remain usable for invalidation.
+
+For example, after deleting an owner and its projects, the retained owner instance can still invalidate its old group:
+
+```php
+UserProjectList::flushScope(user: $deletedUser);
+```
+
+Always pass a model matching the declared constructor type; an integer ID is not interchangeable with a model scope. Scope invalidation remains explicit: changing a model's attributes does not itself call `flushScope()`. If a model's primary key or connection changes, invalidate the old identity as well as the new one. In applications switching databases behind one connection name, include a separate tenant scope parameter or use a custom key containing that tenant identity.
+
+### Custom Scope Keys for Data Objects
+
+Implement `Atldays\Sculptor\Contracts\CacheScopeKey` to define a stable string component of a scope:
+
+```php
+use Atldays\Sculptor\Contracts\CacheScopeKey;
+
+final readonly class ProjectScopeData implements CacheScopeKey
+{
+    public function __construct(
+        public int $tenantId,
+        public int $userId,
+    ) {}
+
+    public function cacheScopeKey(): string
+    {
+        return json_encode([$this->tenantId, $this->userId], JSON_THROW_ON_ERROR);
+    }
+}
+```
+
+Mark that data object as a constructor parameter:
+
+```php
+public function __construct(
+    #[CacheScope] private readonly ProjectScopeData $context,
+) {}
+
+$query = UserProjectList::make(context: new ProjectScopeData(7, 42));
+$projects = $query->effect();
+
+UserProjectList::flushScope(context: new ProjectScopeData(7, 42));
+```
+
+The returned string is an identity component, not a literal Laravel cache tag. It is combined with the concrete query class and all other marked arguments, then hashed. It cannot be passed directly to `flushCacheTags()`. Scalar strings, models, enums, and custom components have separate type namespaces, so a custom key does not accidentally collide with an ordinary string argument.
+
+For custom components, the object's class is deliberately not added to the key: implementations control that namespace themselves. Two DTO classes returning the same component can identify the same group within a query when the constructor type accepts both (for example, `CacheScopeKey`). Use explicit domain prefixes or unambiguous structured encoding when keys belong to different object types. Automatic groups remain query-class-local; shared Laravel tags still provide cross-query invalidation.
+
+`CacheScopeKey` takes priority over built-in model or enum normalization when an object explicitly implements it. This lets an application define its own model identity policy. The contract also allows an empty string component, distinct from `null`; the final generated tag remains non-empty.
+
+`cacheScopeKey()` must return a deterministic string based on the intended identity, with no SQL, service resolution, or mutable/time-dependent side effects. The method is evaluated during normalization for both caching and invalidation and may be evaluated more than once during query execution. Its exceptions propagate before cache invalidation. User-defined key methods and overridden model identity accessors are responsible for avoiding I/O; Sculptor does not load models or relations on their behalf.
 
 ### Cache Store Attributes
 

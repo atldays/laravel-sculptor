@@ -2,21 +2,23 @@
 
 namespace Atldays\Sculptor\Concerns;
 
+use Atldays\Sculptor\Attributes\{CacheFor, DefaultCacheStore};
 use Atldays\Sculptor\Attributes\Contracts\CacheStoreAttribute;
-use Atldays\Sculptor\Attributes\DefaultCacheStore;
 use Atldays\Sculptor\Attributes\Helpers\AttributeReader;
+use Atldays\Sculptor\Support\CacheScopeResolver;
 use DateTime;
 use Illuminate\Contracts\Cache\Repository as CacheContract;
 use Illuminate\Support\Facades\Cache;
 use Stringable;
+use Webmozart\Assert\Assert;
 
 trait HasCache
 {
     /**
      * The number of seconds or the DateTime instance
-     * that specifies how long to cache the query.
+     * that overrides the attribute/default cache duration. Null means no override.
      */
-    private int|DateTime $cacheFor = 3600;
+    private int|DateTime|null $cacheFor = null;
 
     private bool $cacheDisabled = false;
 
@@ -52,6 +54,24 @@ trait HasCache
     public static function flushBaseCache(): bool
     {
         return static::cache()->tags(static::cacheBaseTag())->flush();
+    }
+
+    public static function flushCacheTags(
+        string|Stringable $tag,
+        string|Stringable ...$tags,
+    ): bool {
+        $tags = array_map('strval', [$tag, ...$tags]);
+
+        foreach ($tags as $tag) {
+            Assert::stringNotEmpty($tag);
+        }
+
+        return static::cache()->tags($tags)->flush();
+    }
+
+    public static function flushScope(mixed ...$arguments): bool
+    {
+        return static::flushCacheTags(CacheScopeResolver::make(static::class)->tagForArguments($arguments));
     }
 
     /**
@@ -100,11 +120,15 @@ trait HasCache
             return 0;
         }
 
-        if ($this->cacheFor instanceof DateTime || $this->cacheFor <= 0) {
-            return $this->cacheFor;
+        $cacheFor = $this->cacheFor
+            ?? AttributeReader::make(static::class)->get(CacheFor::class)?->seconds()
+            ?? 3600;
+
+        if ($cacheFor instanceof DateTime || $cacheFor <= 0) {
+            return $cacheFor;
         }
 
-        return new DateTime("+$this->cacheFor seconds");
+        return new DateTime("+$cacheFor seconds");
     }
 
     /**
@@ -112,7 +136,13 @@ trait HasCache
      */
     public function cacheTags(): array
     {
-        return array_merge($this->cacheTags, [static::cacheBaseTag()]);
+        $tags = $this->cacheTags;
+
+        if (($scope = CacheScopeResolver::make($this)->tag()) !== null) {
+            $tags[] = $scope;
+        }
+
+        return array_merge($tags, [static::cacheBaseTag()]);
     }
 
     final public function cacheStore(): string
