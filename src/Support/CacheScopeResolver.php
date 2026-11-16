@@ -44,12 +44,51 @@ final readonly class CacheScopeResolver
 
     public function tag(): ?string
     {
+        $values = $this->queryValues();
+
+        return $values === [] ? null : $this->buildTag($values);
+    }
+
+    /** @return list<string> Full tuple followed by its proper non-empty subsets. */
+    public function tags(): array
+    {
+        $values = $this->queryValues();
+
+        if ($values === []) {
+            return [];
+        }
+
+        $tags = [$this->buildTag($values)];
+        $size = count($values);
+        $subsets = [[]];
+
+        foreach ($values as $name => $value) {
+            $additional = [];
+
+            foreach ($subsets as $subset) {
+                $subset[$name] = $value;
+                $additional[] = $subset;
+
+                if (count($subset) < $size) {
+                    $tags[] = $this->buildTag($subset);
+                }
+            }
+
+            $subsets = array_merge($subsets, $additional);
+        }
+
+        return $tags;
+    }
+
+    /** @return array<string, array{type: string, value: bool|string|null}> */
+    private function queryValues(): array
+    {
         if ($this->query === null) {
             throw new LogicException('Reading cache scope values requires a query instance. Use tagForArguments() with a class name.');
         }
 
         if ($this->parameters === []) {
-            return null;
+            return [];
         }
 
         $values = [];
@@ -70,13 +109,28 @@ final readonly class CacheScopeResolver
             $values[$name] = $this->normalize($parameter, $property->getValue($this->query));
         }
 
-        return $this->buildTag($values);
+        return $values;
     }
 
     /**
      * @param array<array-key, mixed> $arguments
      */
     public function tagForArguments(array $arguments): string
+    {
+        return $this->buildTag($this->argumentValues($arguments, partial: false));
+    }
+
+    /** @param array<array-key, mixed> $arguments */
+    public function tagForInvalidation(array $arguments): string
+    {
+        return $this->buildTag($this->argumentValues($arguments, partial: true));
+    }
+
+    /**
+     * @param array<array-key, mixed> $arguments
+     * @return array<string, array{type: string, value: bool|string|null}>
+     */
+    private function argumentValues(array $arguments, bool $partial): array
     {
         if ($this->parameters === []) {
             throw new LogicException("Query [$this->queryClass] has no #[CacheScope] parameters.");
@@ -100,9 +154,17 @@ final readonly class CacheScopeResolver
             $bound[$name] = $value;
         }
 
+        if ($partial && $bound === []) {
+            throw new InvalidArgumentException('At least one cache scope argument is required for invalidation.');
+        }
+
         $values = [];
 
         foreach ($this->parameters as $name => $parameter) {
+            if ($partial && !array_key_exists($name, $bound)) {
+                continue;
+            }
+
             if (!array_key_exists($name, $bound) && !$parameter->isDefaultValueAvailable()) {
                 throw new InvalidArgumentException("Missing cache scope argument [$name].");
             }
@@ -111,7 +173,7 @@ final readonly class CacheScopeResolver
             $values[$name] = $this->normalize($parameter, $value);
         }
 
-        return $this->buildTag($values);
+        return $values;
     }
 
     /**

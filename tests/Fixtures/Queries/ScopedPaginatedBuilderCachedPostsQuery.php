@@ -22,7 +22,7 @@ class ScopedPaginatedBuilderCachedPostsQuery extends BuilderCachedQuery implemen
     public function __construct(
         #[CacheScope]
         private readonly int $ownerId,
-        private readonly ?bool $published = null,
+        #[CacheScope] private readonly ?bool $published = null,
     ) {
         self::$constructions++;
         $this->setCacheFor(120)->mergeCacheTags('projects');

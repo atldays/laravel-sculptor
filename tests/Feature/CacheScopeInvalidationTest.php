@@ -6,6 +6,7 @@ namespace Atldays\Sculptor\Tests\Feature;
 
 use Atldays\Sculptor\Attributes\CacheStoreFromConfig;
 use Atldays\Sculptor\Contracts\WithCacheScopeInvalidation;
+use Atldays\Sculptor\Support\CacheScopeResolver;
 use Atldays\Sculptor\Tests\Fixtures\Queries;
 use Atldays\Sculptor\Tests\TestCase;
 use Illuminate\Support\Facades\{Cache, DB};
@@ -107,7 +108,179 @@ class CacheScopeInvalidationTest extends TestCase
     }
 
     #[DataProvider('compositeStrategies')]
-    public function test_composite_scopes_match_the_whole_tuple_and_resolve_optional_defaults(string $class): void
+    public function test_full_tuple_flush_still_invalidates_legacy_entries_without_subset_tags(string $class): void
+    {
+        $query = $class::make(ownerId: 42, published: true, tenantId: 9);
+        $tag = CacheScopeResolver::make($query)->tag();
+        $store = $class::cache();
+        $store->tags([$class::cacheBaseTag(), $tag])->put('legacy', 'old entry', 120);
+        $other = $class::make(ownerId: 57, published: true, tenantId: 9)->getCache();
+        $other->put('other', 'preserved', 120);
+        DB::enableQueryLog();
+
+        $this->assertTrue($class::flushScope(tenantId: 9, published: true, ownerId: 42));
+
+        $this->assertCount(0, DB::getQueryLog());
+        $this->assertNull($store->tags([$class::cacheBaseTag(), $tag])->get('legacy'));
+        $this->assertSame('preserved', $other->get('other'));
+    }
+
+    #[DataProvider('compositeStrategies')]
+    public function test_partial_scopes_match_multiple_filters_together_across_remaining_parameters(string $class): void
+    {
+        $targets = [];
+        $preserved = [];
+
+        foreach ([7, 9] as $tenantId) {
+            $targets[] = $class::make(ownerId: 42, published: true, tenantId: $tenantId);
+            $preserved[] = $class::make(ownerId: 42, published: false, tenantId: $tenantId);
+            $preserved[] = $class::make(ownerId: 57, published: true, tenantId: $tenantId);
+        }
+
+        foreach ([...$targets, ...$preserved] as $query) {
+            $this->assertSame('Original', $query->effect()->first()->title);
+        }
+
+        DB::table('posts')->update(['title' => 'Updated']);
+        DB::enableQueryLog();
+        $this->assertTrue($class::flushScope(published: true, ownerId: 42));
+        $this->assertCount(0, DB::getQueryLog());
+
+        foreach ($preserved as $query) {
+            $this->assertSame('Original', $query->effect()->first()->title);
+        }
+
+        $this->assertCount(0, DB::getQueryLog());
+
+        foreach ($targets as $query) {
+            $this->assertSame('Updated', $query->effect()->first()->title);
+        }
+    }
+
+    #[DataProvider('compositeStrategies')]
+    public function test_a_later_scope_parameter_can_be_flushed_without_supplying_earlier_parameters(string $class): void
+    {
+        $targets = [$class::make(ownerId: 42, published: true), $class::make(ownerId: 57, published: true)];
+        $preserved = [$class::make(ownerId: 42, published: false), $class::make(ownerId: 57), $class::make(ownerId: 42, published: false, tenantId: 9)];
+
+        foreach ([...$targets, ...$preserved] as $query) {
+            $query->effect();
+        }
+
+        DB::table('posts')->update(['title' => 'Updated']);
+        DB::enableQueryLog();
+        $this->assertTrue($class::flushScope(published: true));
+        $this->assertCount(0, DB::getQueryLog());
+
+        foreach ($preserved as $query) {
+            $this->assertSame('Original', $query->effect()->first()->title);
+        }
+
+        $this->assertCount(0, DB::getQueryLog());
+
+        foreach ($targets as $query) {
+            $this->assertSame('Updated', $query->effect()->first()->title);
+        }
+    }
+
+    #[DataProvider('compositeStrategies')]
+    public function test_explicit_null_matches_only_null_variants_of_the_supplied_owner(string $class): void
+    {
+        $target = $class::make(ownerId: 42);
+        $preserved = [$class::make(ownerId: 42, published: true), $class::make(ownerId: 42, published: false), $class::make(ownerId: 57)];
+
+        foreach ([$target, ...$preserved] as $query) {
+            $query->effect();
+        }
+
+        DB::table('posts')->update(['title' => 'Updated']);
+        DB::enableQueryLog();
+        $this->assertTrue($class::flushScope(ownerId: 42, published: null));
+        $this->assertCount(0, DB::getQueryLog());
+
+        foreach ($preserved as $query) {
+            $this->assertSame('Original', $query->effect()->first()->title);
+        }
+
+        $this->assertCount(0, DB::getQueryLog());
+        $this->assertSame('Updated', $target->effect()->first()->title);
+    }
+
+    #[DataProvider('paginatedStrategies')]
+    public function test_partial_scope_flush_covers_all_statuses_pages_page_sizes_and_totals(string $class): void
+    {
+        foreach ([42, 57] as $ownerId) {
+            foreach ([false, true] as $published) {
+                for ($i = 0; $i < 2; $i++) {
+                    DB::table('posts')->insert(['author_id' => $ownerId, 'title' => 'Original', 'published' => $published]);
+                }
+            }
+        }
+
+        $targets = [];
+        $preserved = [];
+
+        foreach ([null, false, true] as $published) {
+            foreach ([1, 2, 3] as $page) {
+                $targets[] = [$class::make(ownerId: 42, published: $published)->perPage(1)->page($page), $published];
+                $preserved[] = $class::make(ownerId: 57, published: $published)->perPage(1)->page($page);
+            }
+        }
+
+        $targets[] = [$class::make(ownerId: 42, published: true)->perPage(2)->page(2), true];
+
+        foreach ($targets as [$query]) {
+            $this->assertSame('Original', $query->effect()->items()[0]->title);
+        }
+
+        foreach ($preserved as $query) {
+            $query->effect();
+        }
+
+        DB::table('posts')->update(['title' => 'Updated']);
+        DB::table('posts')->insert(['author_id' => 42, 'title' => 'Updated', 'published' => true]);
+        DB::enableQueryLog();
+        $constructions = $class::$constructions;
+        $this->assertTrue($class::flushScope(ownerId: 42));
+        $this->assertSame($constructions, $class::$constructions);
+        $this->assertCount(0, DB::getQueryLog());
+
+        foreach ($preserved as $query) {
+            $this->assertSame('Original', $query->effect()->items()[0]->title);
+        }
+
+        $this->assertCount(0, DB::getQueryLog());
+
+        foreach ($targets as [$query, $published]) {
+            $result = $query->effect();
+            $this->assertSame('Updated', $result->items()[0]->title);
+            $this->assertSame(match ($published) {
+                null => 7,
+                true => 4,
+                false => 3,
+            }, $result->total());
+        }
+    }
+
+    #[DataProvider('compositeStrategies')]
+    public function test_invalid_partial_filters_are_all_checked_before_accessing_the_store(string $class): void
+    {
+        $repository = $class::make(ownerId: 42)->getCache();
+        $repository->put('sentinel', 'preserved', 60);
+        Cache::shouldReceive('store')->never();
+
+        foreach ([[], ['ownerId' => '42'], ['ownerId' => 42, 'published' => 'true'], ['unknown' => 42], [42, 'ownerId' => 57]] as $arguments) {
+            try {
+                $class::flushScope(...$arguments);
+                $this->fail('Invalid partial input must fail before cache access.');
+            } catch (InvalidArgumentException) {
+                $this->assertSame('preserved', $repository->get('sentinel'));
+            }
+        }
+    }
+
+    #[DataProvider('compositeStrategies')]
+    public function test_composite_scopes_match_all_supplied_values_and_omit_defaults_when_flushing(string $class): void
     {
         $active = $class::make(ownerId: 42, published: true);
         $inactive = $class::make(ownerId: 42, published: false);
@@ -132,10 +305,11 @@ class CacheScopeInvalidationTest extends TestCase
         $this->assertSame('Updated', $active->effect()->sole()->title);
         $this->assertCount(1, DB::getQueryLog());
 
-        $class::flushScope(ownerId: 42); // Only the default published=null group.
+        $class::flushScope(ownerId: 42); // Every published value, including null.
         $this->assertSame('Updated', $all->effect()->first()->title);
-        $this->assertSame('Original', $inactive->effect()->sole()->title);
-        $this->assertCount(2, DB::getQueryLog());
+        $this->assertSame('Updated', $inactive->effect()->sole()->title);
+        $this->assertSame('Original', $other->effect()->sole()->title);
+        $this->assertCount(3, DB::getQueryLog());
     }
 
     #[DataProvider('strategies')]
@@ -216,7 +390,7 @@ class CacheScopeInvalidationTest extends TestCase
     {
         config()->set('cache.stores.scopes', ['driver' => 'array']);
         config()->set('services.scope_store', 'scopes');
-        $query = new #[CacheStoreFromConfig('services.scope_store')] class(42) extends Queries\ScopedCachedPostsQuery {};
+        $query = new #[CacheStoreFromConfig('services.scope_store')] class(42, true) extends Queries\CompositeScopedCachedPostsQuery {};
         $class = $query::class;
         $this->assertSame('Original', $query->effect()->first()->title);
         Cache::store('array')->tags('projects')->put('unrelated', 'preserved', 60);
@@ -237,6 +411,18 @@ class CacheScopeInvalidationTest extends TestCase
         DB::table('authors')->where('id', 42)->update(['name' => 'Updated owner']);
 
         Queries\ScopedBuilderCachedPostsQuery::flushScope(ownerId: 42);
+
+        $this->assertSame('Updated owner', $query->effect()->first()->author->name);
+    }
+
+    #[DataProvider('compositeStrategies')]
+    public function test_eager_loads_are_invalidated_by_partial_scope_filters(string $class): void
+    {
+        $query = $class::make(ownerId: 42, published: true)->withRelations('author');
+        $this->assertSame('Owner 42', $query->effect()->first()->author->name);
+        DB::table('authors')->where('id', 42)->update(['name' => 'Updated owner']);
+
+        $class::flushScope(ownerId: 42);
 
         $this->assertSame('Updated owner', $query->effect()->first()->author->name);
     }

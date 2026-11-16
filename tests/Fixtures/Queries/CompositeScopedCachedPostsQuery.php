@@ -14,6 +14,7 @@ class CompositeScopedCachedPostsQuery extends CachedAllPostsQuery
         private readonly int $ownerId,
         #[CacheScope]
         private readonly ?bool $published = null,
+        #[CacheScope] public readonly int $tenantId = 7,
     ) {
         $this->setCacheFor(120)->mergeCacheTags('projects');
     }

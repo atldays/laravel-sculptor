@@ -15,7 +15,7 @@ class DataScopedBuilderPostsQuery extends BuilderCachedAllPostsQuery
 
     public function __construct(
         #[CacheScope] private readonly OwnerScopeData $owner,
-        private readonly ?bool $published = null,
+        #[CacheScope] private readonly ?bool $published = null,
     ) {
         self::$constructions++;
         $this->mergeCacheTags('projects');

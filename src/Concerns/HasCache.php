@@ -70,7 +70,7 @@ trait HasCache
 
     public static function flushScope(mixed ...$arguments): bool
     {
-        return static::flushCacheTags(CacheScopeResolver::make(static::class)->tagForArguments($arguments));
+        return static::flushCacheTags(CacheScopeResolver::make(static::class)->tagForInvalidation($arguments));
     }
 
     /**
@@ -135,11 +135,7 @@ trait HasCache
      */
     public function cacheTags(): array
     {
-        $tags = $this->cacheTags;
-
-        if (($scope = CacheScopeResolver::make($this)->tag()) !== null) {
-            $tags[] = $scope;
-        }
+        $tags = array_merge($this->cacheTags, CacheScopeResolver::make($this)->tags());
 
         return array_merge($tags, [static::cacheBaseTag()]);
     }
