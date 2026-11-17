@@ -2,8 +2,7 @@
 
 namespace Atldays\Sculptor\Concerns;
 
-use Atldays\Sculptor\Contracts\WithQuery;
-use Atldays\Sculptor\Contracts\WithResultCache;
+use Atldays\Sculptor\Contracts\{WithQuery, WithResultCache};
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Webmozart\Assert\Assert;
 
@@ -18,12 +17,13 @@ trait QueryResultValue
 {
     use HasResult;
     use HasResultColumn;
+    use PreparesQueryForExecution;
 
     public function effect(): mixed
     {
         Assert::implementsInterface($this, WithQuery::class);
         $column = $this->resultColumn();
-        $query = $this->resultProjectionQuery([$column]);
+        $query = $this->prepareQueryForExecution($this->resultProjectionQuery([$column]));
         $execute = fn (Builder $query) => $query->value($column);
 
         return $this instanceof WithResultCache

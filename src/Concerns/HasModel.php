@@ -3,9 +3,9 @@
 namespace Atldays\Sculptor\Concerns;
 
 use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\Attributes\Helpers\AttributeReader;
+use Atldays\Sculptor\Support\AttributeReader;
 use Illuminate\Database\Eloquent\Model;
-use Webmozart\Assert\Assert;
+use Webmozart\Assert\InvalidArgumentException;
 
 /**
  * @template TModel of Model
@@ -31,7 +31,8 @@ trait HasModel
 
             return $model;
         }
-        Assert::notNull(null, sprintf(
+
+        throw new InvalidArgumentException(sprintf(
             'Expected the property "model" or [%s] attribute to exist.',
             ForModel::class,
         ));

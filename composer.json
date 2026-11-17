@@ -42,7 +42,7 @@
     "require": {
         "php": "^8.2",
         "atldays/laravel-eloquent-filters": "^2.1",
-        "atldays/laravel-eloquent-query-cache": "^2.1",
+        "atldays/laravel-eloquent-query-cache": "^2.1.1",
         "illuminate/cache": "^12.72|^13.42",
         "illuminate/contracts": "^12.72|^13.42",
         "illuminate/database": "^12.72|^13.42",
@@ -55,14 +55,26 @@
         "laravel/pint": "^1.29.3",
         "mockery/mockery": "^1.6.15",
         "orchestra/testbench": "^11.3",
-        "phpunit/phpunit": "^13.4.7"
+        "phpstan/phpstan": "^2.3.6",
+        "phpunit/phpunit": "^13.4.7",
+        "slevomat/coding-standard": "^8.31.3"
     },
     "scripts": {
-        "format": "vendor/bin/pint",
-        "format:test": "vendor/bin/pint --test",
+        "analyse": "vendor/bin/phpstan analyse --memory-limit=1G",
+        "format": [
+            "vendor/bin/pint",
+            "vendor/bin/phpcbf"
+        ],
+        "format:test": [
+            "vendor/bin/pint --test",
+            "vendor/bin/phpcs"
+        ],
         "test": "vendor/bin/phpunit --no-coverage"
     },
     "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
         "sort-packages": true
     },
     "suggest": {

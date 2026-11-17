@@ -2,7 +2,7 @@
 
 namespace Atldays\Sculptor;
 
-abstract class CachedQuery implements Contracts\WithLimit, Contracts\WithModel, Contracts\WithQuery, Contracts\WithResultCache
+abstract class CachedQuery implements Contracts\WithCacheScopeInvalidation, Contracts\WithLimit, Contracts\WithModel, Contracts\WithQuery, Contracts\WithResultCache
 {
     use Concerns\HasCache;
     use Concerns\HasQueryWithFilters;

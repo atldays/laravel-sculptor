@@ -3,17 +3,13 @@
 namespace Atldays\Sculptor\Tests\Feature;
 
 use Atldays\Sculptor\Events\ResultExecuted;
-use Atldays\Sculptor\Tests\Fixtures\Filters\CallbackFilter;
-use Atldays\Sculptor\Tests\Fixtures\Filters\PublishedFilter;
+use Atldays\Sculptor\Tests\Fixtures\Filters\{CallbackFilter, PublishedFilter};
 use Atldays\Sculptor\Tests\Fixtures\Queries;
 use Atldays\Sculptor\Tests\TestCase;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Eloquent\{Builder, ModelNotFoundException};
 use Illuminate\Database\MultipleRecordsFoundException;
 use Illuminate\Database\Query\Builder as QueryBuilder;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\{Cache, DB, Event};
 use PHPUnit\Framework\Attributes\DataProvider;
 
 class AdditionalResultsTest extends TestCase
@@ -22,7 +18,7 @@ class AdditionalResultsTest extends TestCase
     {
         foreach (['' => 'plain', 'Cached' => 'result cache', 'BuilderCached' => 'builder cache'] as $prefix => $strategy) {
             foreach (['Sole', 'SimplePaginated', 'CursorPaginated'] as $kind) {
-                yield $strategy.' '.$kind => [Queries::class.'\\'.$prefix.$kind.'PostsQuery', $kind];
+                yield $strategy . ' ' . $kind => [Queries::class . '\\' . $prefix . $kind . 'PostsQuery', $kind];
             }
         }
     }
@@ -30,7 +26,7 @@ class AdditionalResultsTest extends TestCase
     public static function cachedQueries(): iterable
     {
         foreach (self::queries() as $name => $arguments) {
-            if (! str_starts_with($name, 'plain ')) {
+            if (!str_starts_with($name, 'plain ')) {
                 yield $name => $arguments;
             }
         }
@@ -49,6 +45,7 @@ class AdditionalResultsTest extends TestCase
     public function test_sole_preserves_native_exceptions_and_static_events(string $class): void
     {
         Event::fake([ResultExecuted::class]);
+
         try {
             $class::result();
             $this->fail('Expected missing model.');
@@ -60,15 +57,18 @@ class AdditionalResultsTest extends TestCase
             ['title' => 'one', 'published' => true],
             ['title' => 'two', 'published' => false],
         ]);
+
         if (method_exists($class, 'flushBaseCache')) {
             $class::flushBaseCache();
         }
+
         try {
             $class::result();
             $this->fail('Expected multiple models.');
         } catch (MultipleRecordsFoundException $exception) {
             $this->assertSame(2, $exception->count);
         }
+
         Event::assertDispatchedTimes(ResultExecuted::class, 2);
 
         // sole() must still detect duplicates when a limit of one was configured.
@@ -79,16 +79,20 @@ class AdditionalResultsTest extends TestCase
     public function test_result_cache_does_not_store_either_sole_exception(): void
     {
         $query = Queries\CachedSolePostsQuery::make();
+
         try {
             $query->effect();
         } catch (ModelNotFoundException) {
         }
+
         DB::table('posts')->insert([['title' => 'one'], ['title' => 'two']]);
+
         try {
             $query->effect();
             $this->fail('Expected multiple models.');
         } catch (MultipleRecordsFoundException) {
         }
+
         DB::table('posts')->where('title', 'two')->delete();
         $this->assertSame('one', $query->effect()->title);
     }
@@ -97,6 +101,7 @@ class AdditionalResultsTest extends TestCase
     {
         $class = Queries\BuilderCachedSolePostsQuery::class;
         DB::enableQueryLog();
+
         for ($i = 0; $i < 2; $i++) {
             try {
                 $class::result();
@@ -105,9 +110,11 @@ class AdditionalResultsTest extends TestCase
                 $this->assertCount(1, DB::getQueryLog());
             }
         }
+
         DB::table('posts')->insert([['title' => 'one'], ['title' => 'two']]);
         $class::flushBaseCache();
         DB::flushQueryLog();
+
         for ($i = 0; $i < 2; $i++) {
             try {
                 $class::result();
@@ -130,9 +137,11 @@ class AdditionalResultsTest extends TestCase
         $this->assertSame('visible', $model->title);
         $this->assertSame(['id', 'title'], array_keys($model->getAttributes()));
         Event::fake([ResultExecuted::class]);
+
         if ($kind === 'Sole') {
             DB::table('posts')->where('published', false)->delete();
         }
+
         $class::result();
         $class::result();
         Event::assertDispatchedTimes(ResultExecuted::class, 2);
@@ -165,12 +174,14 @@ class AdditionalResultsTest extends TestCase
         $this->title($query, $kind);
         DB::table('posts')->update(['title' => 'fresh']);
         DB::enableQueryLog();
+
         foreach (['withoutCache', 0, -1] as $bypass) {
             $query = $class::make();
             $bypass === 'withoutCache' ? $query->withoutCache() : $query->setCacheFor($bypass);
             $this->assertSame('fresh', $this->title($query, $kind));
             $this->assertSame('fresh', $this->title($query, $kind));
         }
+
         $this->assertCount(6, DB::getQueryLog());
         $this->assertSame('original', $this->title($class::make(), $kind));
         $this->assertCount(6, DB::getQueryLog());
@@ -183,6 +194,7 @@ class AdditionalResultsTest extends TestCase
         $this->title($class::make(), $kind);
         DB::table('posts')->update(['title' => 'fresh']);
         DB::enableQueryLog();
+
         foreach (['scope', 'callback', 'write'] as $mode) {
             $query = $class::make()->addFilter(new CallbackFilter(fn (Builder $builder) => match ($mode) {
                 'scope' => $builder->withGlobalScope('lock', fn (Builder $query) => $query->lockForUpdate()),
@@ -192,6 +204,7 @@ class AdditionalResultsTest extends TestCase
             $this->assertSame('fresh', $this->title($query, $kind));
             $this->assertSame('fresh', $this->title($query, $kind));
         }
+
         $this->assertCount(6, DB::getQueryLog());
         $this->assertSame('original', $this->title($class::make(), $kind));
     }

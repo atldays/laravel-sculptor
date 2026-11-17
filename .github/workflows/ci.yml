@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   pint:
-    name: Pint
+    name: Code style
     runs-on: ubuntu-24.04
 
     steps:
@@ -46,6 +46,36 @@ jobs:
 
       - name: Check formatting
         run: composer format:test
+
+  phpstan:
+    name: PHPStan
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.composer/cache/files
+            ~/.cache/composer/files
+          key: ${{ runner.os }}-php-8.4-composer-${{ hashFiles('composer.json') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.4-composer-
+
+      - name: Install dependencies
+        run: composer update --prefer-dist --no-interaction
+
+      - name: Run static analysis
+        run: composer analyse
 
   tests:
     name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }} / ${{ matrix.prefer }}

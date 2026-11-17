@@ -4,7 +4,7 @@ namespace Atldays\Sculptor;
 
 use Illuminate\Contracts\Database\Eloquent\Builder;
 
-abstract class BuilderCachedQuery implements Contracts\WithBuilderCache, Contracts\WithLimit, Contracts\WithModel, Contracts\WithQuery
+abstract class BuilderCachedQuery implements Contracts\WithBuilderCache, Contracts\WithCacheScopeInvalidation, Contracts\WithLimit, Contracts\WithModel, Contracts\WithQuery
 {
     use Concerns\HasCache;
     use Concerns\HasQueryWithFilters {

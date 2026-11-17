@@ -2,12 +2,9 @@
 
 namespace Atldays\Sculptor\Tests\Unit;
 
-use Atldays\Sculptor\Tests\Fixtures\Queries\CachedPostsQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\ConfigStoreCachedPostsQuery;
-use Atldays\Sculptor\Tests\Fixtures\Queries\InheritedCachedPostsQuery;
+use Atldays\Sculptor\Tests\Fixtures\Queries\{CachedPostsQuery, ConfigStoreCachedPostsQuery, InheritedCachedPostsQuery};
 use Atldays\Sculptor\Tests\TestCase;
-use Illuminate\Cache\ArrayStore;
-use Illuminate\Cache\DatabaseStore;
+use Illuminate\Cache\{ArrayStore, DatabaseStore};
 
 class HasCacheStoreTest extends TestCase
 {

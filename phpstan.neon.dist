@@ -1,0 +1,11 @@
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    level: 9
+    phpVersion: 80200
+    paths:
+        - src
+        - tests/Fixtures/Queries
+    tmpDir: .phpstan.cache
+    reportUnmatchedIgnoredErrors: true

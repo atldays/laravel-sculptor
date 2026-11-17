@@ -2,8 +2,7 @@
 
 namespace Atldays\Sculptor\Concerns;
 
-use Atldays\Sculptor\Contracts\WithQuery;
-use Atldays\Sculptor\Contracts\WithResultCache;
+use Atldays\Sculptor\Contracts\{WithQuery, WithResultCache};
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Webmozart\Assert\Assert;
@@ -20,6 +19,7 @@ trait QueryResultPluck
     use HasPluckKey;
     use HasResult;
     use HasResultColumn;
+    use PreparesQueryForExecution;
 
     /**
      * @return Collection<array-key, TValue>
@@ -29,7 +29,9 @@ trait QueryResultPluck
         Assert::implementsInterface($this, WithQuery::class);
         $column = $this->resultColumn();
         $key = $this->pluckKey();
-        $query = $this->resultProjectionQuery($key === null || $key === $column ? [$column] : [$column, $key]);
+        $query = $this->prepareQueryForExecution(
+            $this->resultProjectionQuery($key === null || $key === $column ? [$column] : [$column, $key]),
+        );
         $execute = fn (Builder $query) => $query->pluck($column, $key);
 
         return $this instanceof WithResultCache

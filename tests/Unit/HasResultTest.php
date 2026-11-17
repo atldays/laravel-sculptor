@@ -3,8 +3,7 @@
 namespace Atldays\Sculptor\Tests\Unit;
 
 use Atldays\Sculptor\Events\ResultExecuted;
-use Atldays\Sculptor\Tests\Fixtures\Queries\ParameterizedResult;
-use Atldays\Sculptor\Tests\Fixtures\Queries\ThrowingResult;
+use Atldays\Sculptor\Tests\Fixtures\Queries\{ParameterizedResult, ThrowingResult};
 use Atldays\Sculptor\Tests\TestCase;
 use Illuminate\Support\Facades\Event;
 use RuntimeException;

@@ -5,18 +5,13 @@ namespace Atldays\Sculptor\Tests\Feature;
 use Atldays\Sculptor\Attributes\CacheStore;
 use Atldays\Sculptor\Enums\AggregateFunction;
 use Atldays\Sculptor\Events\ResultExecuted;
-use Atldays\Sculptor\Tests\Fixtures\Filters\CallbackFilter;
-use Atldays\Sculptor\Tests\Fixtures\Filters\PublishedFilter;
+use Atldays\Sculptor\Tests\Fixtures\Filters\{CallbackFilter, PublishedFilter};
 use Atldays\Sculptor\Tests\Fixtures\Queries;
 use Atldays\Sculptor\Tests\TestCase;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Query\Builder as QueryBuilder;
-use Illuminate\Database\Query\Expression;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
+use Illuminate\Database\Query\{Builder as QueryBuilder, Expression};
+use Illuminate\Support\{Carbon, Collection};
+use Illuminate\Support\Facades\{Cache, DB, Event};
 use PHPUnit\Framework\Attributes\DataProvider;
 
 class ProjectionResultsTest extends TestCase
@@ -36,7 +31,7 @@ class ProjectionResultsTest extends TestCase
     {
         foreach (['' => 'plain', 'Cached' => 'result cache', 'BuilderCached' => 'builder cache'] as $prefix => $strategy) {
             foreach (['Value', 'Pluck', 'Aggregate'] as $kind) {
-                yield $strategy.' '.$kind => [Queries::class.'\\'.$prefix.$kind.'ProjectionQuery', $kind];
+                yield $strategy . ' ' . $kind => [Queries::class . '\\' . $prefix . $kind . 'ProjectionQuery', $kind];
             }
         }
     }
@@ -44,7 +39,7 @@ class ProjectionResultsTest extends TestCase
     public static function cachedQueries(): iterable
     {
         foreach (self::queries() as $name => $arguments) {
-            if (! str_starts_with($name, 'plain ')) {
+            if (!str_starts_with($name, 'plain ')) {
                 yield $name => $arguments;
             }
         }
@@ -99,11 +94,11 @@ class ProjectionResultsTest extends TestCase
         foreach (self::cachedQueries() as $name => [$class, $kind]) {
             if ($kind === 'Value') {
                 foreach ([false, true] as $missing) {
-                    yield $name.($missing ? ' missing' : ' null row') => [$class, null, $missing];
+                    yield $name . ($missing ? ' missing' : ' null row') => [$class, null, $missing];
                 }
             } elseif ($kind === 'Aggregate') {
                 foreach (['avg', 'min', 'max'] as $function) {
-                    yield $name.' '.$function => [$class, $function, false];
+                    yield $name . ' ' . $function => [$class, $function, false];
                 }
             }
         }
@@ -133,6 +128,7 @@ class ProjectionResultsTest extends TestCase
         }, $this->snapshot($query->effect()));
         $this->assertCount(1, DB::getQueryLog());
         $this->assertSame(['posts.published'], $query->select());
+
         if ($kind !== 'Aggregate') {
             $this->assertStringNotContainsString('*', DB::getQueryLog()[0]['query']);
             $this->assertStringNotContainsString('published', DB::getQueryLog()[0]['query']);
@@ -143,15 +139,18 @@ class ProjectionResultsTest extends TestCase
     public function test_expressions_are_supported_and_distinguish_cache_entries(string $class, string $kind): void
     {
         $query = $class::make();
-        $first = $kind === 'Value' ? 'id' : 'id + 1'.($kind === 'Pluck' ? ' as projected' : '');
-        $second = $kind === 'Value' ? 'published' : 'id + 2'.($kind === 'Pluck' ? ' as projected' : '');
+        $first = $kind === 'Value' ? 'id' : 'id + 1' . ($kind === 'Pluck' ? ' as projected' : '');
+        $second = $kind === 'Value' ? 'published' : 'id + 2' . ($kind === 'Pluck' ? ' as projected' : '');
+
         if ($kind === 'Pluck') {
             $query->withPluckKey(null);
         }
+
         $firstValue = $this->snapshot($query->withResultColumn(new Expression($first))->effect());
         $secondValue = $this->snapshot($query->withResultColumn(new Expression($second))->effect());
         $this->assertNotSame($firstValue, $secondValue);
         $this->assertSame($firstValue, $this->snapshot($query->withResultColumn(new Expression($first))->effect()));
+
         if ($kind === 'Aggregate') {
             $this->assertSame(9, $firstValue);
             $this->assertSame(12, $secondValue);
@@ -184,12 +183,15 @@ class ProjectionResultsTest extends TestCase
     public function test_aggregate_functions_and_columns_match_native_results_on_reused_queries(string $class): void
     {
         $expected = [];
+
         foreach (AggregateFunction::cases() as $function) {
             foreach (['posts.id', 'posts.author_id'] as $column) {
                 $expected[$function->value][$column] = DB::table('posts')->{$function->value}($column);
             }
         }
+
         $query = $class::make();
+
         for ($i = 0; $i < 2; $i++) {
             foreach ($expected as $function => $columns) {
                 foreach ($columns as $column => $value) {
@@ -197,6 +199,7 @@ class ProjectionResultsTest extends TestCase
                 }
             }
         }
+
         $this->assertSame(6, $query->withAggregateFunction(AggregateFunction::Sum)->withResultColumn('posts.id')->limit(1)->effect());
     }
 
@@ -254,9 +257,11 @@ class ProjectionResultsTest extends TestCase
     public function test_null_results_are_cached_and_invalidated(string $class, ?string $function, bool $missing): void
     {
         DB::table('authors')->insert(['id' => 1, 'name' => 'Author']);
+
         if ($missing) {
             DB::table('posts')->delete();
         }
+
         $make = function () use ($class, $function) {
             $query = $class::make()->withResultColumn('posts.author_id');
 
@@ -266,11 +271,13 @@ class ProjectionResultsTest extends TestCase
         $this->assertNull($make()->effect());
         $this->assertNull($make()->effect());
         $this->assertCount(1, DB::getQueryLog());
+
         if ($missing) {
             DB::table('posts')->insert(['title' => 'later', 'published' => true, 'author_id' => 1]);
         } else {
             DB::table('posts')->update(['author_id' => 1]);
         }
+
         $expected = $function === null ? 1 : DB::table('posts')->{$function}('author_id');
         DB::flushQueryLog();
         $this->assertNull($make()->effect());
@@ -319,7 +326,7 @@ class ProjectionResultsTest extends TestCase
     {
         foreach (self::cachedQueries() as $name => [$class, $kind]) {
             foreach (['scope', 'callback'] as $mode) {
-                yield $name.' '.$mode => [$class, $kind, $mode];
+                yield $name . ' ' . $mode => [$class, $kind, $mode];
             }
         }
     }
@@ -339,6 +346,7 @@ class ProjectionResultsTest extends TestCase
             });
         }));
         DB::enableQueryLog();
+
         for ($i = 0; $i < 2; $i++) {
             $this->assertSame(match ($kind) {
                 'Value' => 'ALPHA',
@@ -346,6 +354,7 @@ class ProjectionResultsTest extends TestCase
                 'Aggregate' => 1,
             }, $this->snapshot($query->effect()));
         }
+
         $this->assertSame(2, $scopes);
         $this->assertSame(2, $callbacks);
         $this->assertCount(method_exists($query, 'getCache') ? 1 : 2, DB::getQueryLog());
@@ -362,9 +371,11 @@ class ProjectionResultsTest extends TestCase
                 : $query->beforeQuery(fn (QueryBuilder $query) => $query->lockForUpdate());
         }));
         DB::enableQueryLog();
+
         for ($i = 0; $i < 2; $i++) {
             $this->assertSame($kind === 'Pluck' ? [] : ($kind === 'Aggregate' ? 0 : null), $this->snapshot($query->effect()));
         }
+
         $this->assertCount(2, DB::getQueryLog());
         $this->assertSame($first, $this->snapshot($class::make()->effect()));
         $this->assertCount(2, DB::getQueryLog());

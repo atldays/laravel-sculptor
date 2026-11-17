@@ -2,8 +2,7 @@
 
 namespace Atldays\Sculptor\Concerns;
 
-use Atldays\Sculptor\Contracts\WithQuery;
-use Atldays\Sculptor\Contracts\WithResultCache;
+use Atldays\Sculptor\Contracts\{WithQuery, WithResultCache};
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Webmozart\Assert\Assert;
@@ -13,13 +12,14 @@ use Webmozart\Assert\Assert;
  *
  * @template TModel of Model
  *
- * @property $model class-string<TModel>
+ * @property class-string<TModel> $model
  *
  * @extends HasResult<TModel>
  */
 trait QueryResultFirst
 {
     use HasResult;
+    use PreparesQueryForExecution;
 
     /**
      * @return TModel|null
@@ -32,6 +32,6 @@ trait QueryResultFirst
             return $this->rememberResult('first', fn (Builder $query) => $query->first());
         }
 
-        return $this->query()->first();
+        return $this->queryForExecution()->first();
     }
 }

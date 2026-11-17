@@ -1,6 +1,6 @@
 <?php
 
-namespace Atldays\Sculptor\Support;
+namespace Atldays\Sculptor\Cache\Enums;
 
 /**
  * @internal

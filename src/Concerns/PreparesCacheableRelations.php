@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 trait PreparesCacheableRelations
 {
     /**
-     * @param  Collection<array-key, string|callable>  $relations
+     * @param Collection<array-key, string|callable> $relations
      * @return Collection<string, callable>
      */
     protected function prepareRelations(Collection $relations): Collection

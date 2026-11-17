@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<ruleset name="Sculptor">
+    <description>Spacing around control structures complements the Laravel Pint preset.</description>
+
+    <file>src</file>
+    <file>tests</file>
+    <file>config</file>
+    <arg name="extensions" value="php"/>
+    <arg name="colors"/>
+    <arg value="sp"/>
+
+    <rule ref="SlevomatCodingStandard.ControlStructures.BlockControlStructureSpacing">
+        <properties>
+            <property name="linesCountBefore" value="1"/>
+            <property name="linesCountAfter" value="1"/>
+            <property name="linesCountBeforeFirst" value="0"/>
+            <property name="linesCountAfterLast" value="0"/>
+            <property name="controlStructures" type="array">
+                <element value="if"/>
+                <element value="foreach"/>
+                <element value="for"/>
+                <element value="while"/>
+                <element value="do"/>
+                <element value="switch"/>
+                <element value="try"/>
+            </property>
+        </properties>
+    </rule>
+</ruleset>

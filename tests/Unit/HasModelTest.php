@@ -3,10 +3,7 @@
 namespace Atldays\Sculptor\Tests\Unit;
 
 use Atldays\Sculptor\Tests\Fixtures\Models\Post;
-use Atldays\Sculptor\Tests\Fixtures\Queries\AttributeModelConsumer;
-use Atldays\Sculptor\Tests\Fixtures\Queries\MissingModelConsumer;
-use Atldays\Sculptor\Tests\Fixtures\Queries\ModelConsumer;
-use Atldays\Sculptor\Tests\Fixtures\Queries\ModelPropertyOverridesAttributeConsumer;
+use Atldays\Sculptor\Tests\Fixtures\Queries\{AttributeModelConsumer, MissingModelConsumer, ModelConsumer, ModelPropertyOverridesAttributeConsumer};
 use Atldays\Sculptor\Tests\TestCase;
 use Webmozart\Assert\InvalidArgumentException;
 

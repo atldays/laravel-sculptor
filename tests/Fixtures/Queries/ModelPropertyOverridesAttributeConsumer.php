@@ -4,8 +4,7 @@ namespace Atldays\Sculptor\Tests\Fixtures\Queries;
 
 use Atldays\Sculptor\Attributes\ForModel;
 use Atldays\Sculptor\Concerns\HasModel;
-use Atldays\Sculptor\Tests\Fixtures\Models\PlainPost;
-use Atldays\Sculptor\Tests\Fixtures\Models\Post;
+use Atldays\Sculptor\Tests\Fixtures\Models\{PlainPost, Post};
 
 #[ForModel(PlainPost::class)]
 class ModelPropertyOverridesAttributeConsumer

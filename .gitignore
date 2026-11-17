@@ -1,6 +1,7 @@
 /vendor/
 /composer.phar
 /composer.lock
+/.phpstan.cache/
 
 # PHPUnit
 /.phpunit.cache/

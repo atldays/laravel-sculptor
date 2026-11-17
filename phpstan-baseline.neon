@@ -1,0 +1,2125 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method Atldays\\Sculptor\\Attributes\\CacheStoreFromConfig\:\:store\(\) should return string but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Attributes/CacheStoreFromConfig.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Attributes\\DefaultCacheStore\:\:store\(\) should return string but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Attributes/DefaultCacheStore.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: src/Attributes/Select.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: src/Attributes/WithRelations.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Query\\Builder\:\:with\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/BaseQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\BaseQuery\:\:defaultRelations\(\) should return array\<\(callable\(\)\: mixed\)\|string\> but returns array\<mixed, mixed\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/BaseQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\BaseQuery\:\:prepareRelations\(\) has parameter \$relations with generic class Illuminate\\Support\\Collection but does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/BaseQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\BaseQuery\:\:prepareRelations\(\) return type with generic class Illuminate\\Support\\Collection does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/BaseQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\BaseQuery\:\:query\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: src/BaseQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\BaseQuery\:\:select\(\) should return array\<string\>\|null but returns array\<mixed, mixed\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/BaseQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\BaseQuery\:\:withRelations\(\) has parameter \$relations with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/BaseQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\BaseQuery\:\:withSelect\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/BaseQuery.php
+
+		-
+			message: '#^Property Atldays\\Sculptor\\BaseQuery\:\:\$columns type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/BaseQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\HasQuery uses generic trait Atldays\\Sculptor\\Concerns\\HasModel but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/BaseQuery.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Contracts\\Cache\\Repository\:\:tags\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: src/BuilderCachedQuery.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Contracts\\Database\\Eloquent\\Builder\:\:cacheFor\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/BuilderCachedQuery.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Contracts\\Database\\Eloquent\\Builder\:\:cacheTags\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/BuilderCachedQuery.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Contracts\\Database\\Eloquent\\Builder\:\:dontCache\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/BuilderCachedQuery.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Contracts\\Database\\Eloquent\\Builder\:\:filter\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/BuilderCachedQuery.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Query\\Builder\:\:with\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/BuilderCachedQuery.php
+
+		-
+			message: '#^Cannot call method getQuery\(\) on class\-string\|object\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/BuilderCachedQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\BuilderCachedQuery\:\:baseQuery\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: src/BuilderCachedQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\BuilderCachedQuery\:\:defaultRelations\(\) should return array\<\(callable\(\)\: mixed\)\|string\> but returns array\<mixed, mixed\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/BuilderCachedQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\BuilderCachedQuery\:\:prepareRelations\(\) should return Illuminate\\Support\\Collection\<string, callable\(\)\: mixed\> but returns Illuminate\\Support\\Collection\<\(int\|string\), \(callable\(\)\: mixed\)\|string\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/BuilderCachedQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\BuilderCachedQuery\:\:select\(\) should return array\<string\>\|null but returns array\<mixed, mixed\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/BuilderCachedQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\BuilderCachedQuery\:\:withRelations\(\) has parameter \$relations with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/BuilderCachedQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\BuilderCachedQuery\:\:withSelect\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/BuilderCachedQuery.php
+
+		-
+			message: '#^Parameter \#1 \$key of method Illuminate\\Support\\Collection\<\(int\|string\),mixed\>\:\:put\(\) expects \(int\|string\), \(callable\)\|string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/BuilderCachedQuery.php
+
+		-
+			message: '#^Parameter \#1 \$object_or_class of function method_exists expects object\|string, mixed given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/BuilderCachedQuery.php
+
+		-
+			message: '#^Property Atldays\\Sculptor\\BuilderCachedQuery\:\:\$cacheTags type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/BuilderCachedQuery.php
+
+		-
+			message: '#^Property Atldays\\Sculptor\\BuilderCachedQuery\:\:\$columns type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/BuilderCachedQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\HasQuery uses generic trait Atldays\\Sculptor\\Concerns\\HasModel but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/BuilderCachedQuery.php
+
+		-
+			message: '#^Unsafe call to private method Atldays\\Sculptor\\BuilderCachedQuery\:\:resolveCacheStore\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 2
+			path: src/BuilderCachedQuery.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Contracts\\Cache\\Repository\:\:tags\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: src/CachedQuery.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Contracts\\Database\\Eloquent\\Builder\:\:filter\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/CachedQuery.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Query\\Builder\:\:with\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/CachedQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\CachedQuery\:\:baseQuery\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: src/CachedQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\CachedQuery\:\:defaultRelations\(\) should return array\<\(callable\(\)\: mixed\)\|string\> but returns array\<mixed, mixed\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/CachedQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\CachedQuery\:\:prepareRelations\(\) has parameter \$relations with generic class Illuminate\\Support\\Collection but does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/CachedQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\CachedQuery\:\:prepareRelations\(\) return type with generic class Illuminate\\Support\\Collection does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/CachedQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\CachedQuery\:\:select\(\) should return array\<string\>\|null but returns array\<mixed, mixed\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/CachedQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\CachedQuery\:\:withRelations\(\) has parameter \$relations with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CachedQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\CachedQuery\:\:withSelect\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CachedQuery.php
+
+		-
+			message: '#^Property Atldays\\Sculptor\\CachedQuery\:\:\$cacheTags type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CachedQuery.php
+
+		-
+			message: '#^Property Atldays\\Sculptor\\CachedQuery\:\:\$columns type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/CachedQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\HasQuery uses generic trait Atldays\\Sculptor\\Concerns\\HasModel but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/CachedQuery.php
+
+		-
+			message: '#^Unsafe call to private method Atldays\\Sculptor\\CachedQuery\:\:resolveCacheStore\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 2
+			path: src/CachedQuery.php
+
+		-
+			message: '#^PHPDoc tag @var with type Atldays\\Sculptor\\Contracts\\WithCache is not subtype of native type class\-string\<Atldays\\Sculptor\\Contracts\\WithCache\>\.$#'
+			identifier: varTag.nativeType
+			count: 1
+			path: src/Console/Commands/FlushCacheCommand.php
+
+		-
+			message: '#^Parameter \#2 \.\.\.\$values of function sprintf expects bool\|float\|int\|string\|null, Atldays\\Sculptor\\Contracts\\WithCache given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Console/Commands/FlushCacheCommand.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Contracts\\WithCursorPaginationData\:\:paginationColumns\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Contracts/WithCursorPaginationData.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Contracts\\WithPaginationData\:\:paginationColumns\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Contracts/WithPaginationData.php
+
+		-
+			message: '#^Parameter \#1 \$array \(non\-empty\-list\<string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: src/Data/CursorPaginationData.php
+
+		-
+			message: '#^Parameter \#1 \$array \(non\-empty\-list\<string\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: src/Data/PaginationData.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Contracts\\Database\\Eloquent\\Builder\:\:filter\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Query.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Query\\Builder\:\:with\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Query.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Query\:\:baseQuery\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Query.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Query\:\:defaultRelations\(\) should return array\<\(callable\(\)\: mixed\)\|string\> but returns array\<mixed, mixed\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Query.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Query\:\:prepareRelations\(\) has parameter \$relations with generic class Illuminate\\Support\\Collection but does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Query.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Query\:\:prepareRelations\(\) return type with generic class Illuminate\\Support\\Collection does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Query.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Query\:\:select\(\) should return array\<string\>\|null but returns array\<mixed, mixed\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Query.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Query\:\:withRelations\(\) has parameter \$relations with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Query.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Query\:\:withSelect\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Query.php
+
+		-
+			message: '#^Property Atldays\\Sculptor\\Query\:\:\$columns type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Query.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\HasQuery uses generic trait Atldays\\Sculptor\\Concerns\\HasModel but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Query.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\AggregateProjectionQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/AggregateProjectionQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/AggregateProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\AggregateProjectionQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\AggregateProjectionQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/AggregateProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\AggregateProjectionQuery\:\:resultProjectionQuery\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/AggregateProjectionQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultAggregate uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/AggregateProjectionQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\AllPostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/AllPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/AllPostsQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\AllPostsQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultAll but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/AllPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\AllPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\AllPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/AllPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultAll uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/AllPostsQuery.php
+
+		-
+			message: '#^Property Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ArraySelectPostsQuery\:\:\$select type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/ArraySelectPostsQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\AttributeModelConsumer uses generic trait Atldays\\Sculptor\\Concerns\\HasModel but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/AttributeModelConsumer.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\AttributePostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/AttributePostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/AttributePostsQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\AttributePostsQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultCollection but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/AttributePostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\AttributePostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\AttributePostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/AttributePostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultCollection uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/AttributePostsQuery.php
+
+		-
+			message: '#^Property Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\AttributePropertyDefaultsPostsQuery\:\:\$with type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/AttributePropertyDefaultsPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BasePostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/BasePostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/BasePostsQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BasePostsQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultCollection but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BasePostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BasePostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BasePostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/BasePostsQuery.php
+
+		-
+			message: '#^Property Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BasePostsQuery\:\:\$with type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/BasePostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultCollection uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BasePostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BrokenBuilderCachedPostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/BrokenBuilderCachedPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/BrokenBuilderCachedPostsQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BrokenBuilderCachedPostsQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultCollection but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BrokenBuilderCachedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BrokenBuilderCachedPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BrokenBuilderCachedPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/BrokenBuilderCachedPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultCollection uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BrokenBuilderCachedPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedAggregateProjectionQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedAggregateProjectionQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedAggregateProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedAggregateProjectionQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedAggregateProjectionQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedAggregateProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedAggregateProjectionQuery\:\:resultProjectionQuery\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedAggregateProjectionQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultAggregate uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedAggregateProjectionQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedAllPostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedAllPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedAllPostsQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedAllPostsQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultAll but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedAllPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedAllPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedAllPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedAllPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultAll uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedAllPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedCountPostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedCountPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedCountPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedCountPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedCountPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedCountPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultCount uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedCountPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedCursorPaginatedPostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedCursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedCursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedCursorPaginatedPostsQuery\:\:effect\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\CursorPaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedCursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedCursorPaginatedPostsQuery\:\:effect\(\) should return Illuminate\\Contracts\\Pagination\\CursorPaginator but returns object\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedCursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedCursorPaginatedPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedCursorPaginatedPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedCursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedCursorPaginatedPostsQuery\:\:paginationColumns\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedCursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultCursorPaginated uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedCursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedExistsPostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedExistsPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedExistsPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedExistsPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedExistsPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedExistsPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultExists uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedExistsPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedFirstOrFailPostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedFirstOrFailPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedFirstOrFailPostsQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedFirstOrFailPostsQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultFirstOrFail but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedFirstOrFailPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedFirstOrFailPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedFirstOrFailPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedFirstOrFailPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultFirstOrFail uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedFirstOrFailPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedPluckProjectionQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedPluckProjectionQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedPluckProjectionQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedPluckProjectionQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultPluck but does not specify its types\: TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedPluckProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedPluckProjectionQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedPluckProjectionQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedPluckProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedPluckProjectionQuery\:\:resultProjectionQuery\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedPluckProjectionQuery.php
+
+		-
+			message: '#^Parameter \#2 \$key of method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:pluck\(\) expects string\|null, Illuminate\\Contracts\\Database\\Query\\Expression\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedPluckProjectionQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultPluck uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedPluckProjectionQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedSimplePaginatedPostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedSimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedSimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedSimplePaginatedPostsQuery\:\:effect\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\Paginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedSimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedSimplePaginatedPostsQuery\:\:effect\(\) should return Illuminate\\Contracts\\Pagination\\Paginator but returns object\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedSimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedSimplePaginatedPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedSimplePaginatedPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedSimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedSimplePaginatedPostsQuery\:\:paginationColumns\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedSimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultSimplePaginated uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedSimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedSolePostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedSolePostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedSolePostsQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedSolePostsQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultSole but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedSolePostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedSolePostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedSolePostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedSolePostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultSole uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedSolePostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedValueProjectionQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedValueProjectionQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedValueProjectionQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedValueProjectionQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultValue but does not specify its types\: TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedValueProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedValueProjectionQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedValueProjectionQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedValueProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\BuilderCachedValueProjectionQuery\:\:resultProjectionQuery\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedValueProjectionQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultValue uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/BuilderCachedValueProjectionQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/CachedAggregateProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedAggregateProjectionQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedAggregateProjectionQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedAggregateProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedAggregateProjectionQuery\:\:resultProjectionQuery\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedAggregateProjectionQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultAggregate uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedAggregateProjectionQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/CachedAllPostsQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedAllPostsQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultAll but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedAllPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedAllPostsQuery\:\:effect\(\) should return Illuminate\\Database\\Eloquent\\Collection\<\(int\|string\), Illuminate\\Database\\Eloquent\\Model\> but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedAllPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedAllPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedAllPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedAllPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultAll uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedAllPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedBasePostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/CachedBasePostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/CachedBasePostsQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedBasePostsQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultCollection but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedBasePostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedBasePostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedBasePostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedBasePostsQuery.php
+
+		-
+			message: '#^Property Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedBasePostsQuery\:\:\$with type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/CachedBasePostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultCollection uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedBasePostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/CachedCountPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedCountPostsQuery\:\:effect\(\) should return int but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedCountPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedCountPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedCountPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedCountPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultCount uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedCountPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/CachedCursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Cannot clone mixed\.$#'
+			identifier: clone.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/CachedCursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedCursorPaginatedPostsQuery\:\:effect\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\CursorPaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedCursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedCursorPaginatedPostsQuery\:\:effect\(\) should return Illuminate\\Contracts\\Pagination\\CursorPaginator but returns object\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedCursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedCursorPaginatedPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedCursorPaginatedPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedCursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedCursorPaginatedPostsQuery\:\:paginationColumns\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/CachedCursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultCursorPaginated uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedCursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/CachedExistsPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedExistsPostsQuery\:\:effect\(\) should return bool but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedExistsPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedExistsPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedExistsPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedExistsPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultExists uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedExistsPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/CachedFirstOrFailPostsQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedFirstOrFailPostsQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultFirstOrFail but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedFirstOrFailPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedFirstOrFailPostsQuery\:\:effect\(\) should return Illuminate\\Database\\Eloquent\\Model but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedFirstOrFailPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedFirstOrFailPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedFirstOrFailPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedFirstOrFailPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultFirstOrFail uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedFirstOrFailPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/CachedPaginatedPostsQuery.php
+
+		-
+			message: '#^Cannot clone mixed\.$#'
+			identifier: clone.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/CachedPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPaginatedPostsQuery\:\:effect\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPaginatedPostsQuery\:\:effect\(\) should return Illuminate\\Contracts\\Pagination\\LengthAwarePaginator but returns object\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPaginatedPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPaginatedPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPaginatedPostsQuery\:\:paginationColumns\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/CachedPaginatedPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultPaginated uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedPaginatedPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/CachedPluckProjectionQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPluckProjectionQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultPluck but does not specify its types\: TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedPluckProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPluckProjectionQuery\:\:effect\(\) should return Illuminate\\Support\\Collection\<\(int\|string\), mixed\> but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedPluckProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPluckProjectionQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPluckProjectionQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedPluckProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPluckProjectionQuery\:\:resultProjectionQuery\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedPluckProjectionQuery.php
+
+		-
+			message: '#^Parameter \#2 \$key of method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:pluck\(\) expects string\|null, Illuminate\\Contracts\\Database\\Query\\Expression\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedPluckProjectionQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultPluck uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedPluckProjectionQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/CachedPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/CachedPostsQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPostsQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultCollection but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedPostsQuery.php
+
+		-
+			message: '#^Property Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPostsQuery\:\:\$with type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/CachedPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultCollection uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPostsWithPlainAuthorQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/CachedPostsWithPlainAuthorQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/CachedPostsWithPlainAuthorQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPostsWithPlainAuthorQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultCollection but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedPostsWithPlainAuthorQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPostsWithPlainAuthorQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPostsWithPlainAuthorQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedPostsWithPlainAuthorQuery.php
+
+		-
+			message: '#^Property Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedPostsWithPlainAuthorQuery\:\:\$with type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/CachedPostsWithPlainAuthorQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultCollection uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedPostsWithPlainAuthorQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/CachedSimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Cannot clone mixed\.$#'
+			identifier: clone.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/CachedSimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedSimplePaginatedPostsQuery\:\:effect\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\Paginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedSimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedSimplePaginatedPostsQuery\:\:effect\(\) should return Illuminate\\Contracts\\Pagination\\Paginator but returns object\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedSimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedSimplePaginatedPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedSimplePaginatedPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedSimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedSimplePaginatedPostsQuery\:\:paginationColumns\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/CachedSimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultSimplePaginated uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedSimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/CachedSolePostsQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedSolePostsQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultSole but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedSolePostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedSolePostsQuery\:\:effect\(\) should return Illuminate\\Database\\Eloquent\\Model but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedSolePostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedSolePostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedSolePostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedSolePostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultSole uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedSolePostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/CachedValueProjectionQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedValueProjectionQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultValue but does not specify its types\: TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedValueProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedValueProjectionQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedValueProjectionQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedValueProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CachedValueProjectionQuery\:\:resultProjectionQuery\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CachedValueProjectionQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultValue uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CachedValueProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CompositeScopedBuilderCachedPostsQuery\:\:query\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CompositeScopedBuilderCachedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CompositeScopedCachedPostsQuery\:\:query\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CompositeScopedCachedPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CountPostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/CountPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/CountPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CountPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CountPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CountPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultCount uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CountPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CursorPaginatedPostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/CursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/CursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CursorPaginatedPostsQuery\:\:effect\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\CursorPaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CursorPaginatedPostsQuery\:\:effect\(\) should return Illuminate\\Contracts\\Pagination\\CursorPaginator but returns object\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CursorPaginatedPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CursorPaginatedPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/CursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\CursorPaginatedPostsQuery\:\:paginationColumns\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/CursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultCursorPaginated uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/CursorPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\DataScopedBuilderPostsQuery\:\:query\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/DataScopedBuilderPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\DataScopedPostsQuery\:\:query\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/DataScopedPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Contracts\\Cache\\Repository\:\:tags\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: tests/Fixtures/Queries/DefaultCacheConsumer.php
+
+		-
+			message: '#^Property Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\DefaultCacheConsumer\:\:\$cacheTags type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/DefaultCacheConsumer.php
+
+		-
+			message: '#^Unsafe call to private method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\DefaultCacheConsumer\:\:resolveCacheStore\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 2
+			path: tests/Fixtures/Queries/DefaultCacheConsumer.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ExistsPostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/ExistsPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/ExistsPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ExistsPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ExistsPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/ExistsPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultExists uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/ExistsPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\FilteredPaginatedPostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/FilteredPaginatedPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/FilteredPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\FilteredPaginatedPostsQuery\:\:effect\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/FilteredPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\FilteredPaginatedPostsQuery\:\:effect\(\) should return Illuminate\\Contracts\\Pagination\\LengthAwarePaginator but returns object\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/FilteredPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\FilteredPaginatedPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\FilteredPaginatedPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/FilteredPaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\FilteredPaginatedPostsQuery\:\:paginationColumns\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/FilteredPaginatedPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultPaginated uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/FilteredPaginatedPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\FirstOrFailPostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/FirstOrFailPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/FirstOrFailPostsQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\FirstOrFailPostsQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultFirstOrFail but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/FirstOrFailPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\FirstOrFailPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\FirstOrFailPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/FirstOrFailPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultFirstOrFail uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/FirstOrFailPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\FirstPostQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/FirstPostQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/FirstPostQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\FirstPostQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultFirst but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/FirstPostQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\FirstPostQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\FirstPostQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/FirstPostQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultFirst uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/FirstPostQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/GenericCachedFirstPostQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\GenericCachedFirstPostQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultFirst but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/GenericCachedFirstPostQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\GenericCachedFirstPostQuery\:\:effect\(\) should return Illuminate\\Database\\Eloquent\\Model\|null but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/GenericCachedFirstPostQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\GenericCachedFirstPostQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\GenericCachedFirstPostQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/GenericCachedFirstPostQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultFirst uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/GenericCachedFirstPostQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/GenericCachedPostsQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\GenericCachedPostsQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultCollection but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/GenericCachedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\GenericCachedPostsQuery\:\:effect\(\) should return Illuminate\\Support\\Collection\<\(int\|string\), Illuminate\\Database\\Eloquent\\Model\> but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/GenericCachedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\GenericCachedPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\GenericCachedPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/GenericCachedPostsQuery.php
+
+		-
+			message: '#^Property Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\GenericCachedPostsQuery\:\:\$with type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/GenericCachedPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultCollection uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/GenericCachedPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/InspectableCachedPostsQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\InspectableCachedPostsQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultCollection but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/InspectableCachedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\InspectableCachedPostsQuery\:\:effect\(\) should return Illuminate\\Support\\Collection\<\(int\|string\), Illuminate\\Database\\Eloquent\\Model\> but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/InspectableCachedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\InspectableCachedPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\InspectableCachedPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/InspectableCachedPostsQuery.php
+
+		-
+			message: '#^Property Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\InspectableCachedPostsQuery\:\:\$with type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/InspectableCachedPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultCollection uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/InspectableCachedPostsQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\MissingModelConsumer uses generic trait Atldays\\Sculptor\\Concerns\\HasModel but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/MissingModelConsumer.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ModelConsumer uses generic trait Atldays\\Sculptor\\Concerns\\HasModel but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/ModelConsumer.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ModelConsumer\:\:model\(\) should return class\-string\<Illuminate\\Database\\Eloquent\\Model\> but returns string\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/ModelConsumer.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ModelPropertyOverridesAttributeConsumer uses generic trait Atldays\\Sculptor\\Concerns\\HasModel but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/ModelPropertyOverridesAttributeConsumer.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ModelPropertyOverridesAttributeConsumer\:\:model\(\) should return class\-string\<Illuminate\\Database\\Eloquent\\Model\> but returns string\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/ModelPropertyOverridesAttributeConsumer.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ModelScopedBuilderPostsQuery\:\:query\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/ModelScopedBuilderPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ModelScopedPostsQuery\:\:query\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/ModelScopedPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\PaginatedPostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/PaginatedPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/PaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\PaginatedPostsQuery\:\:effect\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/PaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\PaginatedPostsQuery\:\:effect\(\) should return Illuminate\\Contracts\\Pagination\\LengthAwarePaginator but returns object\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/PaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\PaginatedPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\PaginatedPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/PaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\PaginatedPostsQuery\:\:paginationColumns\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/PaginatedPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultPaginated uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/PaginatedPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/ParameterizedResult.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ParameterizedResult uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/ParameterizedResult.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ParameterizedResult\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ParameterizedResult\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/ParameterizedResult.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Contracts\\Cache\\Repository\:\:tags\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: tests/Fixtures/Queries/PlainCacheConsumer.php
+
+		-
+			message: '#^Property Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\PlainCacheConsumer\:\:\$cacheTags type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/PlainCacheConsumer.php
+
+		-
+			message: '#^Unsafe call to private method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\PlainCacheConsumer\:\:resolveCacheStore\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 2
+			path: tests/Fixtures/Queries/PlainCacheConsumer.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\PluckProjectionQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/PluckProjectionQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/PluckProjectionQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\PluckProjectionQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultPluck but does not specify its types\: TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/PluckProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\PluckProjectionQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\PluckProjectionQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/PluckProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\PluckProjectionQuery\:\:resultProjectionQuery\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/PluckProjectionQuery.php
+
+		-
+			message: '#^Parameter \#2 \$key of method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:pluck\(\) expects string\|null, Illuminate\\Contracts\\Database\\Query\\Expression\|string\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Fixtures/Queries/PluckProjectionQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultPluck uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/PluckProjectionQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\PostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/PostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/PostsQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\PostsQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultCollection but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/PostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\PostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\PostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/PostsQuery.php
+
+		-
+			message: '#^Property Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\PostsQuery\:\:\$with type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/PostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultCollection uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/PostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ScopedBuilderCachedPostsQuery\:\:query\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/ScopedBuilderCachedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ScopedCachedPostsQuery\:\:query\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/ScopedCachedPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ScopedPaginatedBuilderCachedPostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/ScopedPaginatedBuilderCachedPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/ScopedPaginatedBuilderCachedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ScopedPaginatedBuilderCachedPostsQuery\:\:effect\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/ScopedPaginatedBuilderCachedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ScopedPaginatedBuilderCachedPostsQuery\:\:effect\(\) should return Illuminate\\Contracts\\Pagination\\LengthAwarePaginator but returns object\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/ScopedPaginatedBuilderCachedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ScopedPaginatedBuilderCachedPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ScopedPaginatedBuilderCachedPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/ScopedPaginatedBuilderCachedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ScopedPaginatedBuilderCachedPostsQuery\:\:paginationColumns\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/ScopedPaginatedBuilderCachedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ScopedPaginatedBuilderCachedPostsQuery\:\:query\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/ScopedPaginatedBuilderCachedPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultPaginated uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/ScopedPaginatedBuilderCachedPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/ScopedPaginatedCachedPostsQuery.php
+
+		-
+			message: '#^Cannot clone mixed\.$#'
+			identifier: clone.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/ScopedPaginatedCachedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ScopedPaginatedCachedPostsQuery\:\:effect\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/ScopedPaginatedCachedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ScopedPaginatedCachedPostsQuery\:\:effect\(\) should return Illuminate\\Contracts\\Pagination\\LengthAwarePaginator but returns object\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/ScopedPaginatedCachedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ScopedPaginatedCachedPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ScopedPaginatedCachedPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/ScopedPaginatedCachedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ScopedPaginatedCachedPostsQuery\:\:paginationColumns\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/ScopedPaginatedCachedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ScopedPaginatedCachedPostsQuery\:\:query\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/ScopedPaginatedCachedPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultPaginated uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/ScopedPaginatedCachedPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\SimplePaginatedPostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/SimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/SimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\SimplePaginatedPostsQuery\:\:effect\(\) return type with generic interface Illuminate\\Contracts\\Pagination\\Paginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/SimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\SimplePaginatedPostsQuery\:\:effect\(\) should return Illuminate\\Contracts\\Pagination\\Paginator but returns object\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/SimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\SimplePaginatedPostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\SimplePaginatedPostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/SimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\SimplePaginatedPostsQuery\:\:paginationColumns\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Fixtures/Queries/SimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultSimplePaginated uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/SimplePaginatedPostsQuery.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\SolePostsQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/SolePostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/SolePostsQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\SolePostsQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultSole but does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/SolePostsQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\SolePostsQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\SolePostsQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/SolePostsQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultSole uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/SolePostsQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/ThrowingResult.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ThrowingResult uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/ThrowingResult.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ThrowingResult\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ThrowingResult\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/ThrowingResult.php
+
+		-
+			message: '#^Call to an undefined method \$this\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ValueProjectionQuery\)&Atldays\\Sculptor\\Contracts\\WithResultCache\:\:rememberResult\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: tests/Fixtures/Queries/ValueProjectionQuery.php
+
+		-
+			message: '#^Cannot call method dispatch\(\) on mixed\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Fixtures/Queries/ValueProjectionQuery.php
+
+		-
+			message: '#^Class Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ValueProjectionQuery uses generic trait Atldays\\Sculptor\\Concerns\\QueryResultValue but does not specify its types\: TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/ValueProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ValueProjectionQuery\:\:make\(\) should return static\(Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ValueProjectionQuery\) but returns mixed\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/ValueProjectionQuery.php
+
+		-
+			message: '#^Method Atldays\\Sculptor\\Tests\\Fixtures\\Queries\\ValueProjectionQuery\:\:resultProjectionQuery\(\) should return Illuminate\\Contracts\\Database\\Eloquent\\Builder but returns Illuminate\\Database\\Query\\Builder\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Fixtures/Queries/ValueProjectionQuery.php
+
+		-
+			message: '#^Trait Atldays\\Sculptor\\Concerns\\QueryResultValue uses generic trait Atldays\\Sculptor\\Concerns\\HasResult but does not specify its types\: TResult$#'
+			identifier: missingType.generics
+			count: 1
+			path: tests/Fixtures/Queries/ValueProjectionQuery.php

@@ -2,8 +2,7 @@
 
 namespace Atldays\Sculptor\Concerns;
 
-use Atldays\Sculptor\Contracts\WithQuery;
-use Atldays\Sculptor\Contracts\WithResultCache;
+use Atldays\Sculptor\Contracts\{WithQuery, WithResultCache};
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Webmozart\Assert\Assert;
 
@@ -15,6 +14,7 @@ use Webmozart\Assert\Assert;
 trait QueryResultCount
 {
     use HasResult;
+    use PreparesQueryForExecution;
 
     public function effect(): int
     {
@@ -24,6 +24,6 @@ trait QueryResultCount
             return $this->rememberResult('count', fn (Builder $query) => $query->count());
         }
 
-        return $this->query()->count();
+        return $this->queryForExecution()->count();
     }
 }

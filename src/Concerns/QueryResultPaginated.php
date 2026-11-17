@@ -2,8 +2,7 @@
 
 namespace Atldays\Sculptor\Concerns;
 
-use Atldays\Sculptor\Contracts\WithPaginatedResult;
-use Atldays\Sculptor\Contracts\WithResultCache;
+use Atldays\Sculptor\Contracts\{WithPaginatedResult, WithResultCache};
 use Atldays\Sculptor\Data\PaginationData;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -14,12 +13,13 @@ trait QueryResultPaginated
 {
     use HasPagination;
     use HasResult;
+    use PreparesQueryForExecution;
 
     public function effect(): LengthAwarePaginator
     {
         Assert::true($this instanceof WithPaginatedResult, 'Paginated result support is required to paginate results');
 
-        $query = $this->query();
+        $query = $this->queryForExecution();
         $configured = $this->paginationData();
 
         $resolved = new PaginationData(

@@ -2,9 +2,7 @@
 
 namespace Atldays\Sculptor\Concerns;
 
-use Atldays\Sculptor\Contracts\WithLimit;
-use Atldays\Sculptor\Contracts\WithQuery;
-use Atldays\Sculptor\Contracts\WithResultCache;
+use Atldays\Sculptor\Contracts\{WithLimit, WithQuery, WithResultCache};
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -15,13 +13,14 @@ use Webmozart\Assert\Assert;
  *
  * @template TModel of Model
  *
- * @property $model class-string<TModel>
+ * @property class-string<TModel> $model
  *
  * @extends HasResult<Collection<array-key, TModel>>
  */
 trait QueryResultCollection
 {
     use HasResult;
+    use PreparesQueryForExecution;
 
     /**
      * @return Collection<array-key, TModel>
@@ -35,6 +34,6 @@ trait QueryResultCollection
             return $this->rememberResult('collection', fn (Builder $query) => $query->get());
         }
 
-        return $this->query()->get();
+        return $this->queryForExecution()->get();
     }
 }

@@ -2,10 +2,8 @@
 
 namespace Atldays\Sculptor\Concerns;
 
-use Atldays\Sculptor\Attributes\Helpers\AttributeReader;
-use Atldays\Sculptor\Attributes\Limit;
-use Atldays\Sculptor\Attributes\Select;
-use Atldays\Sculptor\Attributes\WithRelations;
+use Atldays\Sculptor\Attributes\{Limit, Select, WithRelations};
+use Atldays\Sculptor\Support\AttributeReader;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -86,7 +84,7 @@ trait HasQuery
     }
 
     /**
-     * @param  string|array|Collection<array-key, string|callable>  $relations
+     * @param string|array|Collection<array-key, string|callable> $relations
      * @return $this
      */
     public function withRelations(string|array|Collection $relations): static

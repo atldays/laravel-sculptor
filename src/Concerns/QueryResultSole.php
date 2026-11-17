@@ -2,11 +2,9 @@
 
 namespace Atldays\Sculptor\Concerns;
 
-use Atldays\Sculptor\Contracts\WithQuery;
-use Atldays\Sculptor\Contracts\WithResultCache;
+use Atldays\Sculptor\Contracts\{WithQuery, WithResultCache};
 use Illuminate\Contracts\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Eloquent\{Model, ModelNotFoundException};
 use Illuminate\Database\MultipleRecordsFoundException;
 use Webmozart\Assert\Assert;
 
@@ -20,6 +18,7 @@ use Webmozart\Assert\Assert;
 trait QueryResultSole
 {
     use HasResult;
+    use PreparesQueryForExecution;
 
     /**
      * @return TModel
@@ -35,6 +34,6 @@ trait QueryResultSole
             return $this->rememberResult('sole', fn (Builder $query) => $query->sole());
         }
 
-        return $this->query()->sole();
+        return $this->queryForExecution()->sole();
     }
 }

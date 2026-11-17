@@ -3,8 +3,7 @@
 namespace Atldays\Sculptor\Attributes;
 
 use Attribute;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\{Cache, Config};
 
 #[Attribute(Attribute::TARGET_CLASS)]
 class DefaultCacheStore implements Contracts\CacheStoreAttribute

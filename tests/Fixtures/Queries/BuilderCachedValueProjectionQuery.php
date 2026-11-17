@@ -2,8 +2,7 @@
 
 namespace Atldays\Sculptor\Tests\Fixtures\Queries;
 
-use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\Attributes\ResultColumn;
+use Atldays\Sculptor\Attributes\{ForModel, ResultColumn};
 use Atldays\Sculptor\BuilderCachedQuery;
 use Atldays\Sculptor\Concerns\QueryResultValue;
 use Atldays\Sculptor\Tests\Fixtures\Models\CacheableProjectionPost;

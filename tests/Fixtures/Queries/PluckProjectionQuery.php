@@ -2,9 +2,7 @@
 
 namespace Atldays\Sculptor\Tests\Fixtures\Queries;
 
-use Atldays\Sculptor\Attributes\ForModel;
-use Atldays\Sculptor\Attributes\PluckKey;
-use Atldays\Sculptor\Attributes\ResultColumn;
+use Atldays\Sculptor\Attributes\{ForModel, PluckKey, ResultColumn};
 use Atldays\Sculptor\Concerns\QueryResultPluck;
 use Atldays\Sculptor\Query;
 use Atldays\Sculptor\Tests\Fixtures\Models\ProjectionPost;

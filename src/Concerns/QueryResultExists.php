@@ -2,8 +2,7 @@
 
 namespace Atldays\Sculptor\Concerns;
 
-use Atldays\Sculptor\Contracts\WithQuery;
-use Atldays\Sculptor\Contracts\WithResultCache;
+use Atldays\Sculptor\Contracts\{WithQuery, WithResultCache};
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Webmozart\Assert\Assert;
 
@@ -15,6 +14,7 @@ use Webmozart\Assert\Assert;
 trait QueryResultExists
 {
     use HasResult;
+    use PreparesQueryForExecution;
 
     public function effect(): bool
     {
@@ -24,6 +24,6 @@ trait QueryResultExists
             return $this->rememberResult('exists', fn (Builder $query) => $query->exists());
         }
 
-        return $this->query()->exists();
+        return $this->queryForExecution()->exists();
     }
 }

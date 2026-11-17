@@ -19,7 +19,7 @@ final readonly class CursorPaginationData
     public array $columns;
 
     /**
-     * @param  list<string>  $columns
+     * @param list<string> $columns
      */
     public function __construct(
         ?int $perPage,
