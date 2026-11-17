@@ -13,12 +13,13 @@ trait QueryResultPaginated
 {
     use HasPagination;
     use HasResult;
+    use PreparesQueryForExecution;
 
     public function effect(): LengthAwarePaginator
     {
         Assert::true($this instanceof WithPaginatedResult, 'Paginated result support is required to paginate results');
 
-        $query = $this->query();
+        $query = $this->queryForExecution();
         $configured = $this->paginationData();
 
         $resolved = new PaginationData(

@@ -20,6 +20,7 @@ use Webmozart\Assert\Assert;
 trait QueryResultCollection
 {
     use HasResult;
+    use PreparesQueryForExecution;
 
     /**
      * @return Collection<array-key, TModel>
@@ -33,6 +34,6 @@ trait QueryResultCollection
             return $this->rememberResult('collection', fn (Builder $query) => $query->get());
         }
 
-        return $this->query()->get();
+        return $this->queryForExecution()->get();
     }
 }

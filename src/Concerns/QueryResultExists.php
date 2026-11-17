@@ -14,6 +14,7 @@ use Webmozart\Assert\Assert;
 trait QueryResultExists
 {
     use HasResult;
+    use PreparesQueryForExecution;
 
     public function effect(): bool
     {
@@ -23,6 +24,6 @@ trait QueryResultExists
             return $this->rememberResult('exists', fn (Builder $query) => $query->exists());
         }
 
-        return $this->query()->exists();
+        return $this->queryForExecution()->exists();
     }
 }

@@ -16,13 +16,14 @@ trait QueryResultAggregate
     use HasAggregateFunction;
     use HasResult;
     use HasResultColumn;
+    use PreparesQueryForExecution;
 
     public function effect(): mixed
     {
         Assert::implementsInterface($this, WithQuery::class);
         $column = $this->resultColumn();
         $function = $this->aggregateFunction()->value;
-        $query = $this->query()->withoutEagerLoads();
+        $query = $this->queryForExecution()->withoutEagerLoads();
         $execute = fn (Builder $query) => $query->{$function}($column);
 
         return $this instanceof WithResultCache

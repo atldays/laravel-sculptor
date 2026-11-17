@@ -470,7 +470,9 @@ Choose a strategy according to what you want to reuse. Both support all 13 resul
 | `CachedQuery` | The completed model, collection, scalar, or paginator result | Cache a query object without changing its Eloquent models |
 | `BuilderCachedQuery` | Database query results, with cacheable eager-loaded relations | Integrate with [Laravel Eloquent Query Cache](https://github.com/atldays/laravel-eloquent-query-cache) |
 
-For builder caching, add `Atldays\QueryCache\Traits\QueryCacheable` to the queried model and to related models whose queries should be cached. The preset validates support on the queried model. To switch the pagination example to builder caching, extend `BuilderCachedQuery`; keep the same result trait, attributes, and invalidation calls. Result caching works with ordinary Eloquent models and controls caching itself, even when those models support builder caching.
+For builder caching, add `Atldays\QueryCache\Traits\QueryCacheable` to the queried model and to related models whose queries should be cached. The preset validates support on the queried model. To switch the pagination example to builder caching, extend `BuilderCachedQuery`; keep the same result trait, attributes, and invalidation calls. Result caching works with ordinary Eloquent models. If a model independently enables Query Cache through its own defaults, that cache remains a separate layer outside transaction bypass.
+
+Sculptor requires Laravel Eloquent Query Cache `^2.1.1`. Polymorphic eager loads inherit the relation's cache settings as defaults; per-type `constrain()` callbacks preserve their filters, projections, and cache overrides.
 
 Use a **tag-capable cache store**, such as Redis. Unsupported stores throw; Sculptor never falls back to clearing the entire store. Publish configuration when you need to change the package default:
 
@@ -497,6 +499,41 @@ Priority is: `withoutCache(true)` → explicit `setCacheFor(int|DateTime)` → n
 Bypass preserves existing entries and the configured TTL, including eager-loaded relation cache settings in builder mode. TTL changes affect subsequent writes; existing entries retain their original expiration. Locked queries (`lockForUpdate()`, `sharedLock()`, or custom string locks) and explicit `useWritePdo()` reads bypass caching. Use a transaction when database locks must protect subsequent work.
 
 Both strategies cache `null`, `false`, zero, and empty collections. Native lookup exceptions propagate and are not cached. Keys distinguish result operations and projection parameters, so value, pluck, and aggregate reads do not collide.
+
+### Bypass Cache Inside Transactions
+
+Implement `Atldays\Sculptor\Contracts\WithoutCacheInTransactions` on a `CachedQuery` or `BuilderCachedQuery` when its reads must go to the database during a transaction. The marker is optional; query classes without it keep their existing behavior.
+
+For example, reuse the paginated query above with this policy:
+
+```php
+namespace App\Queries\Post;
+
+use Atldays\Sculptor\Contracts\WithoutCacheInTransactions;
+use Illuminate\Support\Facades\DB;
+
+class TransactionalPostList extends PaginatedPostsForUser implements WithoutCacheInTransactions {}
+
+// The instance may be created before the transaction starts.
+$query = TransactionalPostList::make(userId: 42, status: 'published');
+
+$posts = DB::transaction(
+    fn () => $query->perPage(20)->effect(),
+);
+
+// Outside the transaction, ordinary caching is restored.
+$posts = $query->effect();
+```
+
+The decision uses the **actual builder connection's** `transactionLevel()`, after applying global scopes and `beforeQuery` callbacks. It does not check only Laravel's default connection. A transaction on an unrelated connection does not disable this query's cache; nested transactions keep bypass active until the outer transaction ends.
+
+During bypass, Sculptor neither reads nor writes the result cache or the underlying Query Cache entries, including models with their own cache defaults. This covers all 13 result traits, pagination totals, and eager-loaded relations, including nested and polymorphic relations. Relations inherit the root query's bypass even when they use a different connection. Existing relation constraints and callbacks still run. The root connection determines the transaction policy; this is not a distributed transaction across those connections.
+
+The policy is evaluated for each execution. It does not change the query instance's TTL or explicit `withoutCache()` setting, flush entries, or cache the transactional result after commit. Existing cached entries remain available outside the transaction. After writes, invalidate affected scopes or tags **after successful commit** as usual; the marker does not perform automatic invalidation. Independently enabled model caches retain their own tags and invalidation policy outside bypass.
+
+A database read still follows the transaction's isolation level. This policy does not change isolation or replace database locks. It covers relations eagerly loaded as part of this query execution; subsequent lazy loads on returned models are separate reads.
+
+Built-in result traits compose `PreparesQueryForExecution` and integrate the guard automatically. Custom result-cache execution should use `rememberResult()`. Custom builder-cache effects can compose `PreparesQueryForExecution`, finish building their query, and call `prepareQueryForExecution($query)` before executing it. Returning a raw builder through `query()` and executing it yourself bypasses the result traits' execution policy.
 
 ### Invalidate by Constructor Arguments
 
@@ -619,6 +656,7 @@ The presets compose public traits. For most applications, start with a preset an
 | `HasQuery` | Selects, relations, limits, and builder creation |
 | `HasQueryWithFilters` | Query construction with composable filters |
 | `HasResult` | Container-backed `make()`, `result()`, and execution events |
+| `PreparesQueryForExecution` | SQL-builder preparation and execution-time cache policy |
 | `HasPagination` | Numbered pagination settings and `PaginationData` |
 | `HasCursorPagination` | Cursor settings and `CursorPaginationData` |
 | `HasResultColumn` | Projection-column defaults and overrides |
@@ -638,7 +676,7 @@ Both cached presets implement the optional `WithCacheTagInvalidation` and `WithC
 `::result()` dispatches `Atldays\Sculptor\Events\ResultExecuted` for successful reads, cache hits, and exceptions. The event exposes `name`, `startedAt`, `finishedAt`, and `duration()` in milliseconds. Direct `->effect()` calls do not dispatch this event.
 
 <details>
-<summary>Attribute and scope utilities</summary>
+<summary>Attribute and cache utilities</summary>
 
 `Atldays\Sculptor\Support\AttributeReader` reads the nearest matching class attribute from an object or class name:
 
@@ -651,12 +689,10 @@ $attribute = AttributeReader::make(PaginatedPostsForUser::class)->get(CacheFor::
 $seconds = $attribute?->seconds();
 ```
 
-The old `Atldays\Sculptor\Attributes\Helpers\AttributeReader` remains a deprecated compatibility class with its constructor and `make()` factory.
-
-Both cache strategies use the object-based `Atldays\Sculptor\Support\CacheScopeResolver`. Its internal API follows the same factory pattern:
+Both cache strategies use the object-based `Atldays\Sculptor\Cache\CacheScopeResolver`. Its internal API follows the same factory pattern:
 
 ```php
-use Atldays\Sculptor\Support\CacheScopeResolver;
+use Atldays\Sculptor\Cache\CacheScopeResolver;
 
 $query = PaginatedPostsForUser::make(userId: 42, status: 'published');
 $resolver = CacheScopeResolver::make($query);
@@ -669,6 +705,35 @@ $partialTag = CacheScopeResolver::make(PaginatedPostsForUser::class)
 ```
 
 `tag()` / `tags()` require an object and read its current values; no-scope queries return `null` / `[]`. Each resolution reads current model/custom identities without memoizing their values. On a class-only context these methods throw `LogicException`. `tagForArguments()` retains full tuple resolution with constructor defaults; `tagForInvalidation()` uses only supplied arguments. Neither constructs the query. Application code should normally use `flushScope()` and `cacheTags()`.
+
+The internal classes are grouped by responsibility:
+
+```text
+src/
+├── Cache/
+│   ├── Enums/
+│   │   └── CachedNull.php
+│   ├── CacheScopeResolver.php
+│   ├── MorphToQueryAdapter.php
+│   └── TransactionCacheGuard.php
+├── Enums/
+│   └── AggregateFunction.php
+└── Support/
+    └── AttributeReader.php
+```
+
+`HasResult` owns result construction and execution events. `PreparesQueryForExecution` owns SQL preparation for query result traits. `TransactionCacheGuard` retains a builder context, following the constructor / `make()` API used by the other support objects:
+
+```php
+use Atldays\Sculptor\Cache\TransactionCacheGuard;
+
+$guard = TransactionCacheGuard::make($builder);
+$prepared = $guard->prepare();
+```
+
+It prepares an independent builder for execution; reusing the guard observes the current transaction state without retaining a bypass flag. `bypass()` acts on the builder supplied to the guard. These are internal helpers; application code should normally use the query interfaces and result traits.
+
+`MorphToQueryAdapter` applies the guard after each concrete polymorphic type's existing constraints, including scopes and callbacks that enable caching. Laravel has no public hook for this step, so access to its internal replay buffer and constraint map is isolated in the adapter. Integration tests cover native and Query Cache relations, multiple types, morph maps, buffered calls, soft deletes, and nested eager loads on the supported Laravel versions.
 
 </details>
 

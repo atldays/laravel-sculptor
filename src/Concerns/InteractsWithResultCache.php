@@ -2,8 +2,9 @@
 
 namespace Atldays\Sculptor\Concerns;
 
-use Atldays\Sculptor\Contracts\WithPaginationData;
-use Atldays\Sculptor\Support\CachedNull;
+use Atldays\Sculptor\Cache\Enums\CachedNull;
+use Atldays\Sculptor\Cache\TransactionCacheGuard;
+use Atldays\Sculptor\Contracts\{WithPaginationData, WithoutCacheInTransactions};
 use Closure;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use JsonException;
@@ -21,8 +22,13 @@ trait InteractsWithResultCache
         $query = $this->prepareResultCacheQuery($query ?? $this->query());
         $baseQuery = $query->getQuery();
         $cacheFor = $this->cacheFor();
+        $bypass = (is_int($cacheFor) && $cacheFor <= 0) || $baseQuery->lock !== null || $baseQuery->useWritePdo;
 
-        if ((is_int($cacheFor) && $cacheFor <= 0) || $baseQuery->lock !== null || $baseQuery->useWritePdo) {
+        if ($this instanceof WithoutCacheInTransactions) {
+            $bypass = TransactionCacheGuard::make($query)->bypass($bypass);
+        }
+
+        if ($bypass) {
             return $callback($query);
         }
 

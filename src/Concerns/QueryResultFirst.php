@@ -19,6 +19,7 @@ use Webmozart\Assert\Assert;
 trait QueryResultFirst
 {
     use HasResult;
+    use PreparesQueryForExecution;
 
     /**
      * @return TModel|null
@@ -31,6 +32,6 @@ trait QueryResultFirst
             return $this->rememberResult('first', fn (Builder $query) => $query->first());
         }
 
-        return $this->query()->first();
+        return $this->queryForExecution()->first();
     }
 }

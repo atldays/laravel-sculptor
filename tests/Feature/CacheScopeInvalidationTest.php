@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Atldays\Sculptor\Tests\Feature;
 
 use Atldays\Sculptor\Attributes\CacheStoreFromConfig;
+use Atldays\Sculptor\Cache\CacheScopeResolver;
 use Atldays\Sculptor\Contracts\WithCacheScopeInvalidation;
-use Atldays\Sculptor\Support\CacheScopeResolver;
 use Atldays\Sculptor\Tests\Fixtures\Queries;
 use Atldays\Sculptor\Tests\TestCase;
 use Illuminate\Support\Facades\{Cache, DB};

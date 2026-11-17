@@ -14,6 +14,7 @@ use Webmozart\Assert\Assert;
 trait QueryResultCount
 {
     use HasResult;
+    use PreparesQueryForExecution;
 
     public function effect(): int
     {
@@ -23,6 +24,6 @@ trait QueryResultCount
             return $this->rememberResult('count', fn (Builder $query) => $query->count());
         }
 
-        return $this->query()->count();
+        return $this->queryForExecution()->count();
     }
 }

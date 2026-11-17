@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Atldays\Sculptor\Tests\Unit;
 
 use Atldays\Sculptor\Attributes\CacheScope;
-use Atldays\Sculptor\Support\CacheScopeResolver;
+use Atldays\Sculptor\Cache\CacheScopeResolver;
 use Atldays\Sculptor\Tests\Fixtures\Enums\ScopeStatus;
 use InvalidArgumentException;
 use LogicException;

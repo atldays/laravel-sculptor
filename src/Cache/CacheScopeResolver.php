@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Atldays\Sculptor\Support;
+namespace Atldays\Sculptor\Cache;
 
 use Atldays\Sculptor\Attributes\CacheScope;
 use Atldays\Sculptor\Contracts\CacheScopeKey;

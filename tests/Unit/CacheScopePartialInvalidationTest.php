@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Atldays\Sculptor\Tests\Unit;
 
 use Atldays\Sculptor\Attributes\CacheScope;
+use Atldays\Sculptor\Cache\CacheScopeResolver;
 use Atldays\Sculptor\Contracts\CacheScopeKey;
-use Atldays\Sculptor\Support\CacheScopeResolver;
 use Atldays\Sculptor\Tests\Fixtures\Data\{FailingOwnerScopeData, OwnerScopeData};
 use InvalidArgumentException;
 use LogicException;

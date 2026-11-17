@@ -18,6 +18,7 @@ use Webmozart\Assert\Assert;
 trait QueryResultSole
 {
     use HasResult;
+    use PreparesQueryForExecution;
 
     /**
      * @return TModel
@@ -33,6 +34,6 @@ trait QueryResultSole
             return $this->rememberResult('sole', fn (Builder $query) => $query->sole());
         }
 
-        return $this->query()->sole();
+        return $this->queryForExecution()->sole();
     }
 }

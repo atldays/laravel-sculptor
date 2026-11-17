@@ -17,12 +17,13 @@ trait QueryResultValue
 {
     use HasResult;
     use HasResultColumn;
+    use PreparesQueryForExecution;
 
     public function effect(): mixed
     {
         Assert::implementsInterface($this, WithQuery::class);
         $column = $this->resultColumn();
-        $query = $this->resultProjectionQuery([$column]);
+        $query = $this->prepareQueryForExecution($this->resultProjectionQuery([$column]));
         $execute = fn (Builder $query) => $query->value($column);
 
         return $this instanceof WithResultCache

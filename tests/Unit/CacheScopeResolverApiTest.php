@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Atldays\Sculptor\Tests\Unit;
 
+use Atldays\Sculptor\Cache\CacheScopeResolver;
 use Atldays\Sculptor\Contracts\CacheScopeKey;
-use Atldays\Sculptor\Support\CacheScopeResolver;
 use Atldays\Sculptor\Tests\Fixtures\Data\OwnerScopeData;
 use Atldays\Sculptor\Tests\Fixtures\Enums\ScopeStatus;
 use Atldays\Sculptor\Tests\Fixtures\Models\PlainAuthor;

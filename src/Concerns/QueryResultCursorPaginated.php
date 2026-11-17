@@ -13,12 +13,13 @@ trait QueryResultCursorPaginated
 {
     use HasCursorPagination;
     use HasResult;
+    use PreparesQueryForExecution;
 
     public function effect(): CursorPaginator
     {
         Assert::true($this instanceof WithCursorPaginatedResult, 'Cursor paginated result support is required to paginate results');
 
-        $query = $this->query();
+        $query = $this->queryForExecution();
         $configured = $this->cursorPaginationData();
         $cursor = is_string($configured->cursor)
             ? Cursor::fromEncoded($configured->cursor)

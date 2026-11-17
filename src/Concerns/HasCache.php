@@ -4,7 +4,8 @@ namespace Atldays\Sculptor\Concerns;
 
 use Atldays\Sculptor\Attributes\{CacheFor, DefaultCacheStore};
 use Atldays\Sculptor\Attributes\Contracts\CacheStoreAttribute;
-use Atldays\Sculptor\Support\{AttributeReader, CacheScopeResolver};
+use Atldays\Sculptor\Cache\CacheScopeResolver;
+use Atldays\Sculptor\Support\AttributeReader;
 use DateTime;
 use Illuminate\Contracts\Cache\Repository as CacheContract;
 use Illuminate\Support\Facades\Cache;
