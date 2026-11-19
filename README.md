@@ -259,6 +259,7 @@ Attributes live in `Atldays\Sculptor\Attributes`. They keep a query's defaults b
 | `#[PluckKey('posts.id')]` | Optional key for a pluck collection | `withPluckKey(...)` |
 | `#[Aggregate(AggregateFunction::Sum)]` | Aggregate operation | `withAggregateFunction(...)` |
 | `#[CacheFor(600)]` | Default cache TTL in seconds | `setCacheFor(...)`, `withoutCache()` |
+| `#[CacheLock(seconds: 30, waitSeconds: 5)]` | Coordinate concurrent fills for a missing cache entry | `setCacheLock(...)`, `withoutCacheLock()` |
 | `#[CacheScope]` | Group entries by a promoted constructor argument | `flushCacheByScope(...)` |
 | `#[CacheStore('redis')]` | Select a cache store | `cacheStore()` |
 | `#[CacheStoreFromConfig('services.cache.queries_store', 'redis')]` | Resolve a store from config, with a fallback | `cacheStore()` |
@@ -266,7 +267,7 @@ Attributes live in `Atldays\Sculptor\Attributes`. They keep a query's defaults b
 
 `AggregateFunction` lives in `Atldays\Sculptor\Enums`. All attributes are class-level except `CacheScope`, which marks promoted constructor parameters. Class attributes are inherited; the nearest matching declaration wins. `DefaultCacheStore` can explicitly restore default-store selection in a subclass.
 
-Runtime overrides take precedence over attribute defaults. The existing `$model`, `$select`, and `$with` properties remain supported; those properties take precedence over their corresponding attributes, after applicable runtime overrides. With no select configuration, Sculptor selects the model's qualified `*` columns.
+Runtime overrides take precedence over attribute defaults. The `$model`, `$select`, and `$with` properties take precedence over their corresponding attributes, after applicable runtime overrides. With no select configuration, Sculptor selects the model's qualified `*` columns.
 
 ```php
 $posts = PostsForUser::make(userId: 42)
@@ -472,7 +473,7 @@ Choose a strategy according to what you want to reuse. Both support all 13 resul
 
 For builder caching, add `Atldays\QueryCache\Traits\QueryCacheable` to the queried model and to related models whose queries should be cached. The preset validates support on the queried model. To switch the pagination example to builder caching, extend `BuilderCachedQuery`; keep the same result trait, attributes, and invalidation calls. Result caching works with ordinary Eloquent models. If a model independently enables Query Cache through its own defaults, that cache remains a separate layer outside transaction bypass.
 
-Sculptor requires Laravel Eloquent Query Cache `^2.1.1`. Polymorphic eager loads inherit the relation's cache settings as defaults; per-type `constrain()` callbacks preserve their filters, projections, and cache overrides.
+Sculptor requires Laravel Eloquent Query Cache `^2.2.0`. Polymorphic eager loads inherit the relation's cache settings as defaults; per-type `constrain()` callbacks preserve their filters, projections, and cache overrides.
 
 Use a **tag-capable cache store**, such as Redis. Unsupported stores throw; Sculptor never falls back to clearing the entire store. Publish configuration when you need to change the package default:
 
@@ -508,9 +509,50 @@ Bypass preserves existing entries and the configured TTL, including eager-loaded
 
 Both strategies cache `null`, `false`, zero, and empty collections. Native lookup exceptions propagate and are not cached. Keys distinguish result operations and projection parameters, so value, pluck, and aggregate reads do not collide.
 
+### Coordinate Concurrent Cache Misses
+
+Use `#[CacheLock]` on expensive cached queries when several requests may need the same missing result:
+
+```php
+namespace App\Queries\Post;
+
+use Atldays\Sculptor\Attributes\{CacheFor, CacheLock};
+
+#[CacheFor(600)]
+#[CacheLock(seconds: 30, waitSeconds: 5)]
+class ProtectedPostList extends PaginatedPostsForUser {}
+
+// Use the class's cache duration and lock settings immediately.
+$posts = ProtectedPostList::result(userId: 42);
+
+// Override the lock settings for this instance.
+$posts = ProtectedPostList::make(userId: 42)
+    ->setCacheLock(seconds: 60, waitSeconds: 10)
+    ->effect();
+
+// Keep caching, but fill a missing entry without Sculptor's lock policy.
+$posts = ProtectedPostList::make(userId: 42)
+    ->withoutCacheLock()
+    ->effect();
+```
+
+`CacheFor(600)` controls the result's lifetime. The lock's `seconds` is a separate positive lease, defaulting to 30; `waitSeconds` is the maximum wait for ownership, defaulting to 5. A zero wait makes one immediate attempt. Invalid settings raise `InvalidArgumentException`. Choose a lease that covers the query, its eager loads, and the cache write.
+
+Priority is: explicit `setCacheLock(...)` or `withoutCacheLock()` → nearest inherited `#[CacheLock]` → no Sculptor override. The last runtime call wins. `setCacheLock()` enables protection again after an opt-out; it does not clear `withoutCache()`. Inspect the resolved query setting with `cacheLockOptions()`, which returns Query Cache's immutable `CacheLockOptions` or `null`.
+
+Sculptor does not enable protection by default. In builder mode, existing Query Cache model defaults remain active when the Sculptor query has no lock setting. An explicit opt-out disables those defaults for the root and its eager-loaded queries while preserving ordinary caching. Related-query callbacks, including per-type `MorphTo::constrain()`, can override the inherited lock policy. Nested loads inherit their immediate parent's resolved settings and may override them in turn. Ordinary intermediate relations remain uncached while passing the policy to their cacheable children.
+
+On a hit, the result is returned without acquiring a lock. On a miss, one producer acquires the entry's lock, rechecks the cache, and fills the missing value. Waiting requests reuse that value. `CachedQuery` coordinates the complete result, including eager-loaded models. `BuilderCachedQuery` coordinates each cacheable SQL result independently, including model-default and nested eager loads, polymorphic types, and pagination totals. Different arguments, operations, and pages use their own entries. Changing lock settings does not change cache keys or invalidate existing data.
+
+The implementation uses Query Cache's shared `CacheStampedeGuard`. Model-level Query Cache independently enabled beneath `CachedQuery` remains a separate layer; the result lock does not replace that model's policy. `withoutCache()`, nonpositive Sculptor TTLs, SQL locks, write-PDO reads, and the transaction policy below bypass the affected cache without acquiring a fill lock.
+
+Use a shared Redis store to coordinate workers or servers. A protected miss requires a stable backend with ownership-safe locks; Query Cache rejects unsuitable file, Memcached, null, memoized, and failover stores. A warm entry can still be returned without taking a lock. Waiting beyond `waitSeconds` raises `Illuminate\Contracts\Cache\LockTimeoutException` without falling back to SQL; SQL and cache errors propagate and held locks are released on completion or exceptions.
+
+Protection applies while the lease is valid. An overlong producer can overlap a later one after expiry. This coordinates cache fills; it does not automatically invalidate data after writes or prevent stale publication when invalidation races with an already-running fill.
+
 ### Bypass Cache Inside Transactions
 
-Implement `Atldays\Sculptor\Contracts\WithoutCacheInTransactions` on a `CachedQuery` or `BuilderCachedQuery` when its reads must go to the database during a transaction. The marker is optional; query classes without it keep their existing behavior.
+Implement `Atldays\Sculptor\Contracts\WithoutCacheInTransactions` on a `CachedQuery` or `BuilderCachedQuery` when its reads must go to the database during a transaction. This policy applies only to query classes implementing the marker.
 
 For example, reuse the paginated query above with this policy:
 
@@ -571,7 +613,7 @@ Scopes cover matching pages, page sizes, projections, and filters, including pag
 At least one marked argument is required. Prefer named arguments; positional arguments follow the order of marked parameters, skipping unmarked dependencies. Unknown or unmarked arguments, duplicate assignments, and invalid supplied types raise `InvalidArgumentException` before store access. No scope definition raises `LogicException`. Store failures propagate and boolean flush results are returned.
 
 <details>
-<summary>Scope identities, tag count, and upgrade behavior</summary>
+<summary>Scope identities and tag count</summary>
 
 Each entry receives a full-scope tag plus a tag for every other non-empty subset. Two marked fields produce three scope tags: `userId`, `status`, and `(userId, status)`. Their values and parameter names are normalized and hashed with the concrete query class; these are internal tags, not strings applications should construct. The class's base tag and any manual tags are also retained.
 
@@ -580,8 +622,6 @@ For `n` marked parameters, there are `2^n - 1` scope tags per entry. Keep marked
 Supported values are strings, integers, booleans, finite floats, `null`, unit/backed enums, Eloquent models, and `CacheScopeKey` objects. Types are preserved: `42` and `'42'` differ when the parameter permits both. Pass the enum instance rather than its backing string. Invalidation validates declared types without weak scalar coercion; integer-to-float widening follows PHP. Arrays, arbitrary objects (including plain `Stringable`), resources, `NAN`, and infinite floats are rejected.
 
 Only promoted constructor parameters can carry `#[CacheScope]`. Inherited constructors retain their scopes, including private promoted properties. A replacement constructor must declare its own scopes. Invalid declarations or uninitialized scope properties raise `LogicException`.
-
-**Upgrading from exact-only scopes:** old composite entries lack subset tags. Run `YourQuery::flushCache()` once for affected classes before relying on partial invalidation. Full tuple invalidation still works on old entries when all marked values are supplied explicitly. Single-parameter scopes keep their original tag set.
 
 </details>
 
@@ -654,20 +694,6 @@ php artisan sculptor:flush-cache 'App\Queries\Post\PaginatedPostsForUser'
 
 The command exits with `0` on success and `1` for an invalid query class or failed flush.
 
-### Migrating Invalidation Calls
-
-The invalidation methods from v4.0.0 have been renamed:
-
-| Previous method | New method |
-| --- | --- |
-| `flushBaseCache()` | `flushCache()` |
-| `flushCacheTags(...)` | `flushCacheByTags(...)` |
-| `flushScope(...)` | `flushCacheByScope(...)` |
-
-Update application calls and custom implementations of the cache contracts. The previous method names have been removed without aliases. Parameters, return values, cache keys, tags, and invalidation behavior are unchanged. The `sculptor:flush-cache` command keeps its name and uses `flushCache()`.
-
-The separate `WithCacheTagInvalidation` and `WithCacheScopeInvalidation` contracts have also been removed. Use `WithCache`, or the matching `WithResultCache` / `WithBuilderCache` strategy contract. Custom implementations now provide all three invalidation methods together with the existing cache configuration methods; composing `HasCache` supplies the full implementation.
-
 ## Extend and Observe
 
 The presets compose public traits. For most applications, start with a preset and choose a result trait; use these lower-level pieces for custom query bases:
@@ -684,7 +710,7 @@ The presets compose public traits. For most applications, start with a preset an
 | `HasResultColumn` | Projection-column defaults and overrides |
 | `HasPluckKey` | Pluck-key defaults and overrides |
 | `HasAggregateFunction` | Aggregate-operation defaults and overrides |
-| `HasCache` | TTL, tags, stores, scopes, and invalidation helpers |
+| `HasCache` | TTL, tags, stores, scopes, lock configuration, and invalidation helpers |
 | `InteractsWithResultCache` | Result-cache execution |
 | `InteractsWithBuilderCache` | Builder-cache configuration |
 | `PreparesCacheableRelations` | Cache settings for eager-loaded relations |
@@ -692,6 +718,8 @@ The presets compose public traits. For most applications, start with a preset an
 The 13 `QueryResult*` traits are listed in [Choose Your Result](#choose-your-result). When composing custom bases, implement the matching `Atldays\Sculptor\Contracts` interfaces as the presets do.
 
 `WithCache` defines the shared contract for cache duration, tags, store access, and all three invalidation methods: `flushCache()`, `flushCacheByTags()`, and `flushCacheByScope()`. `WithResultCache` and `WithBuilderCache` extend it to identify the execution strategy. Both cached presets inherit the full contract through their strategy interface and use `HasCache` for its implementation. Custom bases can compose `HasCache` or implement the complete contract themselves.
+
+`HasCache` supplies `#[CacheLock]` defaults, `setCacheLock()`, `withoutCacheLock()`, and `cacheLockOptions()`. The cache execution traits consume these settings. Custom implementations of the cache contracts can use either execution trait without `HasCache` or lock methods; no Sculptor lock policy is applied in that case, and builder-level model defaults still apply. To supply lock settings directly, provide `cacheLockOptions(): ?\Atldays\QueryCache\Cache\CacheLockOptions`; a non-null value enables protection. Lock methods are optional and are not required by the cache contracts.
 
 ### Execution Events
 
@@ -736,6 +764,7 @@ src/
 │   ├── Enums/
 │   │   └── CachedNull.php
 │   ├── CacheScopeResolver.php
+│   ├── CacheLockRelations.php
 │   ├── MorphToQueryAdapter.php
 │   └── TransactionCacheGuard.php
 ├── Enums/
@@ -755,13 +784,13 @@ $prepared = $guard->prepare();
 
 It prepares an independent builder for execution; reusing the guard observes the current transaction state without retaining a bypass flag. `bypass()` acts on the builder supplied to the guard. These are internal helpers; application code should normally use the query interfaces and result traits.
 
-`MorphToQueryAdapter` applies the guard after each concrete polymorphic type's existing constraints, including scopes and callbacks that enable caching. Laravel has no public hook for this step, so access to its internal replay buffer and constraint map is isolated in the adapter. Integration tests cover native and Query Cache relations, multiple types, morph maps, buffered calls, soft deletes, and nested eager loads on the supported Laravel versions.
+`CacheLockRelations` retains a builder and optional lock settings to prepare cacheable eager loads without enabling their caches. It applies defaults before relation callbacks and prepares nested loads after those callbacks. `MorphToQueryAdapter` applies lock defaults before type-specific callbacks and the transaction guard after each concrete type's existing constraints, including scopes and callbacks that enable caching. Laravel has no public hooks for these steps, so access to its internal replay buffer and constraint map is isolated in the adapter. Integration tests cover native and Query Cache relations, multiple types, morph maps, buffered calls, soft deletes, and nested eager loads on the supported Laravel versions.
 
 </details>
 
 ## Testing and Contributing
 
-Query classes give substantial reads a stable home and isolate their rules so they can be exercised against your application's database and fixtures. Sculptor's test suite covers plain queries, filters, result types, pagination, both cache strategies, and invalidation across supported PHP and Laravel versions, with PostgreSQL checks for precise aggregate types.
+Query classes give substantial reads a stable home and isolate their rules so they can be exercised against your application's database and fixtures. Sculptor's test suite covers plain queries, filters, result types, pagination, both cache strategies, and invalidation across supported PHP and Laravel versions, with PostgreSQL checks for precise aggregate types and Redis concurrency checks for shared fills and eager-loaded relations.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development requirements and verification commands, including formatting, PHPStan, PHPUnit, and Composer audit.
 

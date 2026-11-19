@@ -13,7 +13,7 @@ use ReflectionProperty;
 /**
  * @internal
  *
- * Laravel exposes no public hook after MorphTo's per-type constraints.
+ * Laravel exposes no public hooks around MorphTo's per-type constraints.
  * Keep access to its replay buffer and constraint map isolated here.
  */
 final readonly class MorphToQueryAdapter
@@ -30,15 +30,34 @@ final readonly class MorphToQueryAdapter
     /** @param Closure(Builder): void $callback */
     public function onTypeQuery(Closure $callback): void
     {
+        $this->bufferTypeCallback(function (Builder $query) use ($callback): void {
+            $this->afterTypeConstraints($query->getModel()::class, $callback);
+        }, false);
+    }
+
+    /** @param Closure(Builder): void $callback */
+    public function beforeTypeConstraints(Closure $callback): void
+    {
+        $this->bufferTypeCallback($callback, true);
+    }
+
+    /** @param Closure(Builder): void $callback */
+    private function bufferTypeCallback(Closure $callback, bool $prepend): void
+    {
         $property = new ReflectionProperty(MorphTo::class, 'macroBuffer');
         /** @var list<array{method: string, parameters: list<mixed>}> $calls */
         $calls = $property->getValue($this->relation);
-        $calls[] = [
+        $call = [
             'method' => 'tap',
-            'parameters' => [function (Builder $query) use ($callback): void {
-                $this->afterTypeConstraints($query->getModel()::class, $callback);
-            }],
+            'parameters' => [$callback],
         ];
+
+        if ($prepend) {
+            array_unshift($calls, $call);
+        } else {
+            $calls[] = $call;
+        }
+
         $property->setValue($this->relation, $calls);
     }
 

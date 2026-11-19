@@ -842,6 +842,6 @@ class TransactionCacheBypassTest extends TestCase
             $query->perPage(1)->cursor('');
         }
 
-        return $query;
+        return $query->setCacheLock(19, 0);
     }
 }
