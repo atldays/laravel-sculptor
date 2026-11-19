@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Atldays\Sculptor\Concerns;
 
+use Atldays\QueryCache\Cache\CacheStampedeGuard;
 use Atldays\Sculptor\Cache\Enums\CachedNull;
 use Atldays\Sculptor\Cache\TransactionCacheGuard;
 use Atldays\Sculptor\Contracts\{WithPaginationData, WithoutCacheInTransactions};
@@ -32,7 +35,15 @@ trait InteractsWithResultCache
             return $callback($query);
         }
 
-        $result = $this->getCache()->remember(
+        // @phpstan-ignore function.alreadyNarrowedType (Custom cache implementations may omit lock methods.)
+        $lockOptions = method_exists($this, 'cacheLockOptions') ? $this->cacheLockOptions() : null;
+        $cache = $this->getCache();
+
+        if ($lockOptions !== null) {
+            $cache = new CacheStampedeGuard($cache, $lockOptions);
+        }
+
+        $result = $cache->remember(
             $this->cacheKey($kind, $context, $query),
             $cacheFor,
             fn () => $callback($query) ?? CachedNull::Value

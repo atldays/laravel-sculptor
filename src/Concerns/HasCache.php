@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Atldays\Sculptor\Concerns;
 
-use Atldays\Sculptor\Attributes\{CacheFor, DefaultCacheStore};
+use Atldays\QueryCache\Cache\CacheLockOptions;
+use Atldays\Sculptor\Attributes\{CacheFor, CacheLock, DefaultCacheStore};
 use Atldays\Sculptor\Attributes\Contracts\CacheStoreAttribute;
 use Atldays\Sculptor\Cache\CacheScopeResolver;
 use Atldays\Sculptor\Support\AttributeReader;
@@ -21,6 +24,10 @@ trait HasCache
     private int|DateTime|null $cacheFor = null;
 
     private bool $cacheDisabled = false;
+
+    private ?CacheLockOptions $cacheLockOverride = null;
+
+    private bool $cacheLockOverridden = false;
 
     /**
      * The tags for the query cache. Can be useful
@@ -92,6 +99,38 @@ trait HasCache
         $this->cacheDisabled = $withoutCache;
 
         return $this;
+    }
+
+    /** @return $this */
+    public function setCacheLock(int $seconds = 30, int $waitSeconds = 5): static
+    {
+        $this->cacheLockOverride = new CacheLockOptions($seconds, $waitSeconds);
+        $this->cacheLockOverridden = true;
+
+        return $this;
+    }
+
+    /** @return $this */
+    public function withoutCacheLock(): static
+    {
+        $this->cacheLockOverride = null;
+        $this->cacheLockOverridden = true;
+
+        return $this;
+    }
+
+    public function cacheLockOptions(): ?CacheLockOptions
+    {
+        if ($this->cacheLockOverridden) {
+            return $this->cacheLockOverride;
+        }
+
+        return AttributeReader::make($this)->get(CacheLock::class)?->options();
+    }
+
+    protected function hasCacheLockOverride(): bool
+    {
+        return $this->cacheLockOverridden;
     }
 
     /**

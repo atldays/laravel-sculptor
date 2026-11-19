@@ -130,6 +130,17 @@ vendor/bin/phpunit --no-coverage --group postgres --fail-on-skipped --fail-on-em
 
 CI runs this group against PostgreSQL 17 with both supported Laravel versions. Skipped or empty PostgreSQL suites fail the job.
 
+### Redis cache-lock concurrency tests
+
+The `redis` group uses independent PHP workers, a shared Redis service, and a temporary SQLite database. It verifies that matching queries share a fill, cacheable eager-loaded relations execute once, and different constructor arguments can finish while another producer is still running. Each test cleans up only its own Redis prefix and stops its workers.
+
+```bash
+SCULPTOR_REDIS_HOST=127.0.0.1 SCULPTOR_REDIS_PORT=6379 \
+vendor/bin/phpunit --no-coverage --group redis --fail-on-skipped --fail-on-empty-test-suite
+```
+
+The group requires phpredis and `pdo_sqlite` and is skipped when `SCULPTOR_REDIS_HOST` is absent. With a configured host, a missing extension, unavailable service, or worker failure fails the tests. CI runs the group on both supported Laravel versions. Use a dedicated test Redis service.
+
 ## What To Test
 
 When adding or changing functionality, please cover the most relevant public scenario:
