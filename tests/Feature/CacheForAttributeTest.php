@@ -115,7 +115,7 @@ class CacheForAttributeTest extends TestCase
         DB::table('posts')->update(['title' => 'Updated']);
         DB::enableQueryLog();
 
-        $this->assertTrue($class::flushScope(ownerId: 42));
+        $this->assertTrue($class::flushCacheByScope(ownerId: 42));
         $this->assertCount(0, DB::getQueryLog());
         $this->assertSame('Updated', $query->effect()->sole()->title);
         $this->assertCount(1, DB::getQueryLog());

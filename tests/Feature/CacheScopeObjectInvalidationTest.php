@@ -73,7 +73,7 @@ class CacheScopeObjectInvalidationTest extends TestCase
         DB::enableQueryLog();
         $constructions = $class::$constructions;
 
-        $this->assertTrue($class::flushScope(owner: $freshOwner));
+        $this->assertTrue($class::flushCacheByScope(owner: $freshOwner));
 
         $this->assertSame($constructions, $class::$constructions);
         $this->assertCount(0, DB::getQueryLog());
@@ -98,7 +98,7 @@ class CacheScopeObjectInvalidationTest extends TestCase
         $this->assertFalse($owner->exists);
         DB::enableQueryLog();
 
-        $this->assertTrue($class::flushScope(owner: $owner));
+        $this->assertTrue($class::flushCacheByScope(owner: $owner));
         $this->assertCount(0, DB::getQueryLog());
         $this->assertCount(0, $query->effect());
         $this->assertCount(1, DB::getQueryLog());
@@ -114,7 +114,7 @@ class CacheScopeObjectInvalidationTest extends TestCase
         $this->assertFalse($reference->exists);
         DB::enableQueryLog();
 
-        $class::flushScope(owner: $reference);
+        $class::flushCacheByScope(owner: $reference);
 
         $this->assertCount(0, DB::getQueryLog());
         $this->assertSame('Updated', $query->effect()->first()->title);
@@ -133,7 +133,7 @@ class CacheScopeObjectInvalidationTest extends TestCase
         DB::table('posts')->update(['title' => 'Updated']);
         DB::enableQueryLog();
 
-        $class::flushScope(owner: $first);
+        $class::flushCacheByScope(owner: $first);
 
         $this->assertCount(0, DB::getQueryLog());
         $this->assertSame('Original', $secondQuery->effect()->first()->title);
@@ -150,7 +150,7 @@ class CacheScopeObjectInvalidationTest extends TestCase
         Cache::shouldReceive('store')->never();
         $this->expectException(InvalidArgumentException::class);
 
-        $class::flushScope(owner: $partial);
+        $class::flushCacheByScope(owner: $partial);
     }
 
     public function test_custom_key_failures_abort_before_cache_access(): void
@@ -159,7 +159,7 @@ class CacheScopeObjectInvalidationTest extends TestCase
         Cache::shouldReceive('store')->never();
         $this->expectException(RuntimeException::class);
 
-        Queries\DataScopedPostsQuery::flushScope(owner: $value);
+        Queries\DataScopedPostsQuery::flushCacheByScope(owner: $value);
     }
 
     #[DataProvider('strategies')]
@@ -171,12 +171,12 @@ class CacheScopeObjectInvalidationTest extends TestCase
         $second->effect();
         DB::table('posts')->update(['title' => 'Updated']);
 
-        $class::flushBaseCache();
+        $class::flushCache();
 
         $this->assertSame('Updated', $first->effect()->first()->title);
         $this->assertSame('Updated', $second->effect()->first()->title);
         DB::table('posts')->update(['title' => 'Latest']);
-        $class::flushCacheTags('projects');
+        $class::flushCacheByTags('projects');
         $this->assertSame('Latest', $first->effect()->first()->title);
         $this->assertSame('Latest', $second->effect()->first()->title);
     }

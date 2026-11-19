@@ -3,20 +3,21 @@
 namespace Atldays\Sculptor\Tests\Unit;
 
 use ArgumentCountError;
-use Atldays\Sculptor\Contracts\{WithBuilderCache, WithCache, WithCacheScopeInvalidation, WithCacheTagInvalidation, WithResultCache};
+use Atldays\Sculptor\Attributes\CacheScope;
+use Atldays\Sculptor\Concerns\HasCache;
+use Atldays\Sculptor\Contracts\WithCache;
 use Atldays\Sculptor\Tests\Fixtures\Queries\{CachedPostsQuery, ConfigStoreCachedPostsQuery, DefaultCacheConsumer, InheritedCachedPostsQuery, PlainCacheConsumer};
 use Atldays\Sculptor\Tests\TestCase;
 use BadMethodCallException;
 use Illuminate\Cache\Repository;
-use Illuminate\Contracts\Cache\Repository as CacheRepository;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\{Cache, DB};
 use InvalidArgumentException;
 use Mockery;
 use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 use Stringable;
 
-class FlushCacheTagsTest extends TestCase
+class FlushCacheByTagsTest extends TestCase
 {
     protected function tearDown(): void
     {
@@ -41,7 +42,7 @@ class FlushCacheTagsTest extends TestCase
             $repositories[$name] = $repository;
         }
 
-        $this->assertTrue(PlainCacheConsumer::flushCacheTags($tag));
+        $this->assertTrue(PlainCacheConsumer::flushCacheByTags($tag));
 
         foreach ($repositories as $name => $repository) {
             $this->assertSame((string)$name === $tag ? null : (string)$name, $repository->get('result'));
@@ -70,7 +71,7 @@ class FlushCacheTagsTest extends TestCase
             }
         };
 
-        $this->assertTrue(PlainCacheConsumer::flushCacheTags($tag, str('projects:user:57')));
+        $this->assertTrue(PlainCacheConsumer::flushCacheByTags($tag, str('projects:user:57')));
         $this->assertSame(1, $tag->conversions);
         $this->assertNull($first->get('result'));
         $this->assertNull($second->get('result'));
@@ -96,7 +97,7 @@ class FlushCacheTagsTest extends TestCase
         Cache::shouldReceive('store')->never();
 
         try {
-            PlainCacheConsumer::flushCacheTags(...$tags);
+            PlainCacheConsumer::flushCacheByTags(...$tags);
             $this->fail('An empty tag must be rejected before invalidation.');
         } catch (InvalidArgumentException) {
             $this->assertSame('preserved', $repository->get('result'));
@@ -107,7 +108,7 @@ class FlushCacheTagsTest extends TestCase
     {
         $this->expectException(ArgumentCountError::class);
 
-        PlainCacheConsumer::flushCacheTags();
+        PlainCacheConsumer::flushCacheByTags();
     }
 
     public static function flushResults(): array
@@ -123,7 +124,7 @@ class FlushCacheTagsTest extends TestCase
         $repository->shouldReceive('flush')->once()->andReturn($result);
         Cache::shouldReceive('store')->once()->with('array')->andReturn($repository);
 
-        $this->assertSame($result, PlainCacheConsumer::flushCacheTags('projects:user:42', 'projects:user:57'));
+        $this->assertSame($result, PlainCacheConsumer::flushCacheByTags('projects:user:42', 'projects:user:57'));
     }
 
     public function test_store_exceptions_are_propagated_unchanged(): void
@@ -135,7 +136,7 @@ class FlushCacheTagsTest extends TestCase
         Cache::shouldReceive('store')->once()->with('array')->andReturn($repository);
 
         try {
-            PlainCacheConsumer::flushCacheTags('projects:user:42');
+            PlainCacheConsumer::flushCacheByTags('projects:user:42');
             $this->fail('The store exception must be propagated.');
         } catch (RuntimeException $caught) {
             $this->assertSame($exception, $caught);
@@ -163,7 +164,7 @@ class FlushCacheTagsTest extends TestCase
         $primary->put('result', 'primary', 60);
         $secondary->put('result', 'secondary', 60);
 
-        $this->assertTrue($class::flushCacheTags('projects:user:42'));
+        $this->assertTrue($class::flushCacheByTags('projects:user:42'));
         $this->assertSame($expectedStore === 'array' ? null : 'primary', $primary->get('result'));
         $this->assertSame($expectedStore === 'secondary' ? null : 'secondary', $secondary->get('result'));
     }
@@ -178,7 +179,7 @@ class FlushCacheTagsTest extends TestCase
 
         try {
             try {
-                DefaultCacheConsumer::flushCacheTags('projects:user:42');
+                DefaultCacheConsumer::flushCacheByTags('projects:user:42');
                 $this->fail('A store without tags must reject invalidation.');
             } catch (BadMethodCallException) {
                 $this->assertSame('preserved', $repository->get('unrelated'));
@@ -188,41 +189,36 @@ class FlushCacheTagsTest extends TestCase
         }
     }
 
-    public function test_legacy_cache_interfaces_do_not_require_the_new_capability(): void
+    public function test_custom_cache_contract_supports_every_invalidation_operation(): void
     {
-        // This deliberately implements the old contracts without using HasCache.
-        $legacy = new class() implements WithBuilderCache, WithResultCache
+        $query = new class(42) implements WithCache
         {
-            public function cacheFor(): int
-            {
-                return 60;
-            }
+            use HasCache;
 
-            public function cacheTags(): array
-            {
-                return [];
-            }
-
-            public function getCache(): CacheRepository
-            {
-                return Cache::store('array');
-            }
-
-            public function cacheStore(): string
-            {
-                return 'array';
-            }
-
-            public static function flushBaseCache(): bool
-            {
-                return true;
-            }
+            public function __construct(#[CacheScope] private readonly int $ownerId) {}
         };
+        $class = $query::class;
+        $other = new $class(57);
+        $first = $query->setCacheTags('owner:42')->getCache();
+        $second = $other->setCacheTags('owner:57')->getCache();
+        $first->put('result', 'first', 60);
+        $second->put('result', 'second', 60);
+        $this->assertInstanceOf(WithCache::class, $query);
+        DB::enableQueryLog();
 
-        $this->assertInstanceOf(WithCache::class, $legacy);
-        $this->assertNotInstanceOf(WithCacheTagInvalidation::class, $legacy);
-        $this->assertNotInstanceOf(WithCacheScopeInvalidation::class, $legacy);
-        $this->assertFalse(method_exists($legacy, 'flushCacheTags'));
-        $this->assertFalse(method_exists($legacy, 'flushScope'));
+        $this->assertTrue($class::flushCacheByScope(ownerId: 42));
+        $this->assertNull($first->get('result'));
+        $this->assertSame('second', $second->get('result'));
+
+        $first->put('result', 'first', 60);
+        $this->assertTrue($class::flushCacheByTags('owner:42'));
+        $this->assertNull($first->get('result'));
+        $this->assertSame('second', $second->get('result'));
+
+        $first->put('result', 'first', 60);
+        $this->assertTrue($class::flushCache());
+        $this->assertNull($first->get('result'));
+        $this->assertNull($second->get('result'));
+        $this->assertCount(0, DB::getQueryLog());
     }
 }

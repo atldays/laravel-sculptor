@@ -37,7 +37,7 @@ class FlushCacheCommand extends Command
             Assert::implementsInterface($class, WithCache::class);
 
             /** @var WithCache $class */
-            Assert::true($class::flushBaseCache(), sprintf('Failed to flush cache for class "%s".', $class));
+            Assert::true($class::flushCache(), sprintf('Failed to flush cache for class "%s".', $class));
 
             $this->components->info(sprintf('Cache flushed successfully for class "%s"', $class));
 

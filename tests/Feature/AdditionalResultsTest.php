@@ -58,8 +58,8 @@ class AdditionalResultsTest extends TestCase
             ['title' => 'two', 'published' => false],
         ]);
 
-        if (method_exists($class, 'flushBaseCache')) {
-            $class::flushBaseCache();
+        if (method_exists($class, 'flushCache')) {
+            $class::flushCache();
         }
 
         try {
@@ -112,7 +112,7 @@ class AdditionalResultsTest extends TestCase
         }
 
         DB::table('posts')->insert([['title' => 'one'], ['title' => 'two']]);
-        $class::flushBaseCache();
+        $class::flushCache();
         DB::flushQueryLog();
 
         for ($i = 0; $i < 2; $i++) {
@@ -161,7 +161,7 @@ class AdditionalResultsTest extends TestCase
         $this->assertSame('original', $this->title($query, $kind));
         Cache::store('array')->tags('additional-results')->flush();
         $this->assertSame('changed', $this->title($query, $kind));
-        $class::flushBaseCache();
+        $class::flushCache();
         $this->assertSame('changed', $this->title($query, $kind));
         $this->assertCount(2, DB::getQueryLog());
     }

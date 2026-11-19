@@ -51,12 +51,12 @@ trait HasCache
         return 'sculptor:' . static::class;
     }
 
-    public static function flushBaseCache(): bool
+    public static function flushCache(): bool
     {
         return static::cache()->tags(static::cacheBaseTag())->flush();
     }
 
-    public static function flushCacheTags(
+    public static function flushCacheByTags(
         string|Stringable $tag,
         string|Stringable ...$tags,
     ): bool {
@@ -69,9 +69,9 @@ trait HasCache
         return static::cache()->tags($tags)->flush();
     }
 
-    public static function flushScope(mixed ...$arguments): bool
+    public static function flushCacheByScope(mixed ...$arguments): bool
     {
-        return static::flushCacheTags(CacheScopeResolver::make(static::class)->tagForInvalidation($arguments));
+        return static::flushCacheByTags(CacheScopeResolver::make(static::class)->tagForInvalidation($arguments));
     }
 
     /**

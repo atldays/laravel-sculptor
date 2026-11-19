@@ -190,7 +190,7 @@ class QueryResultsTest extends TestCase
         if ($kind === 'firstOrFail') {
             $this->assertEmptyResult($queryClass::make(), $kind);
             DB::table('posts')->insert(['title' => 'Visible', 'published' => true]);
-            $queryClass::flushBaseCache();
+            $queryClass::flushCache();
             $this->assertSame('Visible', $queryClass::result()->title);
 
             return;
@@ -204,7 +204,7 @@ class QueryResultsTest extends TestCase
         $this->assertEmptyResult($query, $kind);
         $this->assertCount(0, DB::getQueryLog());
 
-        $queryClass::flushBaseCache();
+        $queryClass::flushCache();
 
         $this->assertSame($this->expected($kind), $this->snapshot($query->effect(), $kind));
         $this->assertCount(1, DB::getQueryLog());
