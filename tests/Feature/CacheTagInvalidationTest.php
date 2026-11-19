@@ -2,7 +2,7 @@
 
 namespace Atldays\Sculptor\Tests\Feature;
 
-use Atldays\Sculptor\Contracts\WithCacheTagInvalidation;
+use Atldays\Sculptor\Contracts\WithCache;
 use Atldays\Sculptor\Tests\Fixtures\Queries\{OwnerBuilderCachedPostsQuery, OwnerCachedPostsQuery};
 use Atldays\Sculptor\Tests\TestCase;
 use Illuminate\Support\Facades\DB;
@@ -33,14 +33,14 @@ class CacheTagInvalidationTest extends TestCase
     {
         $first = $class::make(ownerId: 42);
         $second = $class::make(ownerId: 57);
-        $this->assertInstanceOf(WithCacheTagInvalidation::class, $first);
+        $this->assertInstanceOf(WithCache::class, $first);
         $this->assertSame('Original 42', $first->effect()->sole()->title);
         $this->assertSame('Original 57', $second->effect()->sole()->title);
 
         DB::table('posts')->update(['title' => 'Updated']);
         DB::enableQueryLog();
 
-        $this->assertTrue($class::flushCacheTags('projects:user:42'));
+        $this->assertTrue($class::flushCacheByTags('projects:user:42'));
         $this->assertCount(0, DB::getQueryLog());
         $this->assertSame('Original 57', $second->effect()->sole()->title);
         $this->assertCount(0, DB::getQueryLog());
@@ -62,7 +62,7 @@ class CacheTagInvalidationTest extends TestCase
         DB::table('posts')->update(['title' => 'Updated']);
         DB::enableQueryLog();
 
-        $this->assertTrue($class::flushCacheTags('projects:user:42', 'projects:user:57'));
+        $this->assertTrue($class::flushCacheByTags('projects:user:42', 'projects:user:57'));
         $this->assertCount(0, DB::getQueryLog());
         $this->assertSame('Original 73', $queries[73]->effect()->sole()->title);
         $this->assertCount(0, DB::getQueryLog());
@@ -83,7 +83,7 @@ class CacheTagInvalidationTest extends TestCase
         DB::table('posts')->update(['title' => 'Updated']);
         DB::enableQueryLog();
 
-        $invalidator::flushCacheTags('projects:user:42');
+        $invalidator::flushCacheByTags('projects:user:42');
 
         $this->assertCount(0, DB::getQueryLog());
         $this->assertSame('Original 57', $unrelated->effect()->sole()->title);
@@ -106,7 +106,7 @@ class CacheTagInvalidationTest extends TestCase
         DB::table('posts')->update(['title' => 'Updated']);
         DB::enableQueryLog();
 
-        $this->assertTrue($class::flushBaseCache());
+        $this->assertTrue($class::flushCache());
         $this->assertCount(0, DB::getQueryLog());
         $this->assertSame('Original 42', $other->effect()->sole()->title);
         $this->assertCount(0, DB::getQueryLog());
@@ -121,7 +121,7 @@ class CacheTagInvalidationTest extends TestCase
         // Both fixtures have a required owner argument; invalidation must not construct them.
         DB::enableQueryLog();
 
-        $this->assertTrue($class::flushCacheTags('projects:user:42'));
+        $this->assertTrue($class::flushCacheByTags('projects:user:42'));
         $this->assertCount(0, DB::getQueryLog());
     }
 }

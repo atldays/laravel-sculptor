@@ -210,7 +210,7 @@ class PaginationResultsTest extends TestCase
         $this->assertCount(1, DB::getQueryLog());
         DB::table('posts')->insert(['title' => 'later']);
         $this->assertSame([], $query->effect()->items());
-        $class::flushBaseCache();
+        $class::flushCache();
         $this->assertCount(1, $query->effect()->items());
     }
 

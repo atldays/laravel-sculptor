@@ -6,7 +6,7 @@ namespace Atldays\Sculptor\Tests\Feature;
 
 use Atldays\Sculptor\Attributes\CacheStoreFromConfig;
 use Atldays\Sculptor\Cache\CacheScopeResolver;
-use Atldays\Sculptor\Contracts\WithCacheScopeInvalidation;
+use Atldays\Sculptor\Contracts\WithCache;
 use Atldays\Sculptor\Tests\Fixtures\Queries;
 use Atldays\Sculptor\Tests\TestCase;
 use Illuminate\Support\Facades\{Cache, DB};
@@ -47,7 +47,7 @@ class CacheScopeInvalidationTest extends TestCase
         ];
 
         foreach ($queries as $query) {
-            $this->assertInstanceOf(WithCacheScopeInvalidation::class, $query);
+            $this->assertInstanceOf(WithCache::class, $query);
             $this->assertSame('Original', $query->effect()->first()->title);
         }
 
@@ -57,7 +57,7 @@ class CacheScopeInvalidationTest extends TestCase
         DB::enableQueryLog();
 
         $constructed = $class::$constructions;
-        $this->assertTrue($class::flushScope(ownerId: 42));
+        $this->assertTrue($class::flushCacheByScope(ownerId: 42));
         $this->assertSame($constructed, $class::$constructions);
         $this->assertCount(0, DB::getQueryLog());
         $this->assertSame('Original', $otherOwner->effect()->first()->title);
@@ -98,7 +98,7 @@ class CacheScopeInvalidationTest extends TestCase
         DB::table('posts')->update(['title' => 'Updated']);
         DB::enableQueryLog();
 
-        $class::flushScope(ownerId: 42);
+        $class::flushCacheByScope(ownerId: 42);
 
         $this->assertCount(0, DB::getQueryLog());
         $this->assertSame('Original', $other->effect()->items()[0]->title);
@@ -118,7 +118,7 @@ class CacheScopeInvalidationTest extends TestCase
         $other->put('other', 'preserved', 120);
         DB::enableQueryLog();
 
-        $this->assertTrue($class::flushScope(tenantId: 9, published: true, ownerId: 42));
+        $this->assertTrue($class::flushCacheByScope(tenantId: 9, published: true, ownerId: 42));
 
         $this->assertCount(0, DB::getQueryLog());
         $this->assertNull($store->tags([$class::cacheBaseTag(), $tag])->get('legacy'));
@@ -143,7 +143,7 @@ class CacheScopeInvalidationTest extends TestCase
 
         DB::table('posts')->update(['title' => 'Updated']);
         DB::enableQueryLog();
-        $this->assertTrue($class::flushScope(published: true, ownerId: 42));
+        $this->assertTrue($class::flushCacheByScope(published: true, ownerId: 42));
         $this->assertCount(0, DB::getQueryLog());
 
         foreach ($preserved as $query) {
@@ -169,7 +169,7 @@ class CacheScopeInvalidationTest extends TestCase
 
         DB::table('posts')->update(['title' => 'Updated']);
         DB::enableQueryLog();
-        $this->assertTrue($class::flushScope(published: true));
+        $this->assertTrue($class::flushCacheByScope(published: true));
         $this->assertCount(0, DB::getQueryLog());
 
         foreach ($preserved as $query) {
@@ -195,7 +195,7 @@ class CacheScopeInvalidationTest extends TestCase
 
         DB::table('posts')->update(['title' => 'Updated']);
         DB::enableQueryLog();
-        $this->assertTrue($class::flushScope(ownerId: 42, published: null));
+        $this->assertTrue($class::flushCacheByScope(ownerId: 42, published: null));
         $this->assertCount(0, DB::getQueryLog());
 
         foreach ($preserved as $query) {
@@ -241,7 +241,7 @@ class CacheScopeInvalidationTest extends TestCase
         DB::table('posts')->insert(['author_id' => 42, 'title' => 'Updated', 'published' => true]);
         DB::enableQueryLog();
         $constructions = $class::$constructions;
-        $this->assertTrue($class::flushScope(ownerId: 42));
+        $this->assertTrue($class::flushCacheByScope(ownerId: 42));
         $this->assertSame($constructions, $class::$constructions);
         $this->assertCount(0, DB::getQueryLog());
 
@@ -271,7 +271,7 @@ class CacheScopeInvalidationTest extends TestCase
 
         foreach ([[], ['ownerId' => '42'], ['ownerId' => 42, 'published' => 'true'], ['unknown' => 42], [42, 'ownerId' => 57]] as $arguments) {
             try {
-                $class::flushScope(...$arguments);
+                $class::flushCacheByScope(...$arguments);
                 $this->fail('Invalid partial input must fail before cache access.');
             } catch (InvalidArgumentException) {
                 $this->assertSame('preserved', $repository->get('sentinel'));
@@ -294,7 +294,7 @@ class CacheScopeInvalidationTest extends TestCase
         DB::table('posts')->update(['title' => 'Updated']);
         DB::enableQueryLog();
 
-        $this->assertTrue($class::flushScope(published: true, ownerId: 42));
+        $this->assertTrue($class::flushCacheByScope(published: true, ownerId: 42));
         $this->assertCount(0, DB::getQueryLog());
 
         foreach ([$inactive, $all, $other] as $query) {
@@ -305,7 +305,7 @@ class CacheScopeInvalidationTest extends TestCase
         $this->assertSame('Updated', $active->effect()->sole()->title);
         $this->assertCount(1, DB::getQueryLog());
 
-        $class::flushScope(ownerId: 42); // Every published value, including null.
+        $class::flushCacheByScope(ownerId: 42); // Every published value, including null.
         $this->assertSame('Updated', $all->effect()->first()->title);
         $this->assertSame('Updated', $inactive->effect()->sole()->title);
         $this->assertSame('Original', $other->effect()->sole()->title);
@@ -327,7 +327,7 @@ class CacheScopeInvalidationTest extends TestCase
         $constructions = $class::$constructions;
         DB::enableQueryLog();
 
-        $this->assertTrue($class::flushScope(ownerId: 42));
+        $this->assertTrue($class::flushCacheByScope(ownerId: 42));
 
         $this->assertSame($constructions, $class::$constructions);
         $this->assertCount(0, DB::getQueryLog());
@@ -345,11 +345,11 @@ class CacheScopeInvalidationTest extends TestCase
         $second->effect();
         DB::table('posts')->update(['title' => 'Updated']);
 
-        $class::flushScope(ownerId: 42);
+        $class::flushCacheByScope(ownerId: 42);
         $this->assertSame('Updated', $first->effect()->first()->title);
         $this->assertSame('Original', $second->effect()->first()->title);
 
-        $class::flushCacheTags('projects');
+        $class::flushCacheByTags('projects');
         $this->assertSame('Updated', $second->effect()->first()->title);
     }
 
@@ -362,7 +362,7 @@ class CacheScopeInvalidationTest extends TestCase
         $second->effect();
         DB::table('posts')->update(['title' => 'Updated']);
 
-        $class::flushBaseCache();
+        $class::flushCache();
 
         $this->assertSame('Updated', $first->effect()->first()->title);
         $this->assertSame('Updated', $second->effect()->first()->title);
@@ -378,7 +378,7 @@ class CacheScopeInvalidationTest extends TestCase
 
         foreach ([[], ['ownerId' => '42'], ['ownerId' => 42, 'published' => true]] as $arguments) {
             try {
-                $class::flushScope(...$arguments);
+                $class::flushCacheByScope(...$arguments);
                 $this->fail('Invalid scope input must fail before cache access.');
             } catch (InvalidArgumentException) {
                 $this->assertSame('preserved', $repository->get('sentinel'));
@@ -397,7 +397,7 @@ class CacheScopeInvalidationTest extends TestCase
         DB::table('posts')->update(['title' => 'Updated']);
         DB::enableQueryLog();
 
-        $this->assertTrue($class::flushScope(ownerId: 42));
+        $this->assertTrue($class::flushCacheByScope(ownerId: 42));
         $this->assertCount(0, DB::getQueryLog());
         $this->assertSame('preserved', Cache::store('array')->tags('projects')->get('unrelated'));
         $this->assertSame('Updated', $query->effect()->first()->title);
@@ -410,7 +410,7 @@ class CacheScopeInvalidationTest extends TestCase
         $this->assertSame('Owner 42', $query->effect()->first()->author->name);
         DB::table('authors')->where('id', 42)->update(['name' => 'Updated owner']);
 
-        Queries\ScopedBuilderCachedPostsQuery::flushScope(ownerId: 42);
+        Queries\ScopedBuilderCachedPostsQuery::flushCacheByScope(ownerId: 42);
 
         $this->assertSame('Updated owner', $query->effect()->first()->author->name);
     }
@@ -422,7 +422,7 @@ class CacheScopeInvalidationTest extends TestCase
         $this->assertSame('Owner 42', $query->effect()->first()->author->name);
         DB::table('authors')->where('id', 42)->update(['name' => 'Updated owner']);
 
-        $class::flushScope(ownerId: 42);
+        $class::flushCacheByScope(ownerId: 42);
 
         $this->assertSame('Updated owner', $query->effect()->first()->author->name);
     }

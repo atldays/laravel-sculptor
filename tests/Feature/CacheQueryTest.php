@@ -106,7 +106,7 @@ class CacheQueryTest extends TestCase
 
         $first = GenericCachedPostsQuery::result();
 
-        GenericCachedPostsQuery::flushBaseCache();
+        GenericCachedPostsQuery::flushCache();
 
         Post::query()->delete();
         Post::create(['author_id' => $author->id, 'title' => 'Updated', 'published' => true]);

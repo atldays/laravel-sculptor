@@ -129,7 +129,7 @@ class TransactionCacheBypassTest extends TestCase
         });
 
         $this->assertSame('Original', $query->effect()->sole()->title);
-        $query::flushBaseCache();
+        $query::flushCache();
         // A native model cache can exist independently of Sculptor's result cache.
         Cache::store('array')->flush();
         $this->assertSame('Committed', $query->effect()->sole()->title);

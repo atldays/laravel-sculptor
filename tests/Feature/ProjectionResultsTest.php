@@ -241,7 +241,7 @@ class ProjectionResultsTest extends TestCase
     public function test_non_positive_ttls_bypass_reads_and_writes(string $class, string $kind): void
     {
         foreach ([0, -1] as $ttl) {
-            $class::flushBaseCache();
+            $class::flushCache();
             $query = $class::make()->setCacheFor($ttl);
             DB::enableQueryLog();
             DB::flushQueryLog();
@@ -282,7 +282,7 @@ class ProjectionResultsTest extends TestCase
         DB::flushQueryLog();
         $this->assertNull($make()->effect());
         $this->assertCount(0, DB::getQueryLog());
-        $class::flushBaseCache();
+        $class::flushCache();
         $this->assertSame($expected, $make()->effect());
         $this->assertCount(1, DB::getQueryLog());
     }

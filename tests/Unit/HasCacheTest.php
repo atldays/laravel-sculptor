@@ -60,7 +60,7 @@ class HasCacheTest extends TestCase
 
         Cache::shouldReceive('store')->once()->with('array')->andReturn($repository);
 
-        $this->assertTrue(PlainCacheConsumer::flushBaseCache());
+        $this->assertTrue(PlainCacheConsumer::flushCache());
     }
 
     public function test_flushing_base_cache_preserves_class_with_same_name_in_another_namespace(): void
@@ -74,7 +74,7 @@ class HasCacheTest extends TestCase
         $this->assertSame('first', $first->getCache()->get('result'));
         $this->assertSame('second', $second->getCache()->get('result'));
 
-        PlainCacheConsumer::flushBaseCache();
+        PlainCacheConsumer::flushCache();
 
         $this->assertNull($first->getCache()->get('result'));
         $this->assertSame('second', $second->getCache()->get('result'));

@@ -259,7 +259,7 @@ Attributes live in `Atldays\Sculptor\Attributes`. They keep a query's defaults b
 | `#[PluckKey('posts.id')]` | Optional key for a pluck collection | `withPluckKey(...)` |
 | `#[Aggregate(AggregateFunction::Sum)]` | Aggregate operation | `withAggregateFunction(...)` |
 | `#[CacheFor(600)]` | Default cache TTL in seconds | `setCacheFor(...)`, `withoutCache()` |
-| `#[CacheScope]` | Group entries by a promoted constructor argument | `flushScope(...)` |
+| `#[CacheScope]` | Group entries by a promoted constructor argument | `flushCacheByScope(...)` |
 | `#[CacheStore('redis')]` | Select a cache store | `cacheStore()` |
 | `#[CacheStoreFromConfig('services.cache.queries_store', 'redis')]` | Resolve a store from config, with a fallback | `cacheStore()` |
 | `#[DefaultCacheStore]` | Use Sculptor's configured default store | `cacheStore()` |
@@ -419,7 +419,7 @@ $posts = PaginatedPostsForUser::make(userId: 42, status: 'published')
     ->effect();
 
 // Invalidate every status and every cached page for this user.
-PaginatedPostsForUser::flushScope(userId: 42);
+PaginatedPostsForUser::flushCacheByScope(userId: 42);
 ```
 
 `perPage()`, `page()`, `pageName()`, and `paginationColumns()` are available for both numbered pagination traits. `paginationData()` returns the configured settings. The default `paginationColumns(['*'])` preserves `#[Select]` / `withSelect()`; an explicit column list replaces the execution select. Page size comes from `perPage()` or the model's `getPerPage()`, not `#[Limit]`.
@@ -482,6 +482,14 @@ php artisan vendor:publish --tag=sculptor-config
 
 Set `SCULPTOR_CACHE_STORE=redis` to select the package default. The published `sculptor.cache_store` setting falls back to `CACHE_STORE` / `CACHE_DRIVER` when that variable is absent. Class-level store attributes can select a different store for a query. Inspect its effective configuration with `cacheFor()`, `cacheStore()`, `cacheTags()`, and the static `cacheBaseTag()`.
 
+Both cached presets expose the same invalidation API:
+
+```php
+PaginatedPostsForUser::flushCache(); // All cache entries for this query class.
+PaginatedPostsForUser::flushCacheByTags('posts:user:42'); // Entries carrying this tag.
+PaginatedPostsForUser::flushCacheByScope(userId: 42); // Every matching status and page.
+```
+
 ### Duration and Bypass
 
 `#[CacheFor(600)]` defines a ten-minute default. Runtime settings apply to that instance:
@@ -541,19 +549,19 @@ Built-in result traits compose `PreparesQueryForExecution` and integrate the gua
 
 ```php
 // Only this user's published results, across all pages and page sizes.
-PaginatedPostsForUser::flushScope(userId: 42, status: 'published');
+PaginatedPostsForUser::flushCacheByScope(userId: 42, status: 'published');
 
 // Every status and every page for user 42. Other users stay cached.
-PaginatedPostsForUser::flushScope(userId: 42);
+PaginatedPostsForUser::flushCacheByScope(userId: 42);
 
 // Published results for all users of this query class.
-PaginatedPostsForUser::flushScope(status: 'published');
+PaginatedPostsForUser::flushCacheByScope(status: 'published');
 
 // Only entries whose status scope is null; omission means any status.
-PaginatedPostsForUser::flushScope(userId: 42, status: null);
+PaginatedPostsForUser::flushCacheByScope(userId: 42, status: null);
 
 // All entries belonging to this query class.
-PaginatedPostsForUser::flushBaseCache();
+PaginatedPostsForUser::flushCache();
 ```
 
 Supplied arguments match **together**; omitted marked arguments are wildcards, even if their constructor parameters are required or have defaults. Explicit `null` matches only `null`. Mark only the parameters you want to use for invalidation: an unmarked status can still filter SQL, while a marked `userId` groups all that user's statuses.
@@ -573,7 +581,7 @@ Supported values are strings, integers, booleans, finite floats, `null`, unit/ba
 
 Only promoted constructor parameters can carry `#[CacheScope]`. Inherited constructors retain their scopes, including private promoted properties. A replacement constructor must declare its own scopes. Invalid declarations or uninitialized scope properties raise `LogicException`.
 
-**Upgrading from exact-only scopes:** old composite entries lack subset tags. Run `YourQuery::flushBaseCache()` once for affected classes before relying on partial invalidation. Full tuple invalidation still works on old entries when all marked values are supplied explicitly. Single-parameter scopes keep their original tag set.
+**Upgrading from exact-only scopes:** old composite entries lack subset tags. Run `YourQuery::flushCache()` once for affected classes before relying on partial invalidation. Full tuple invalidation still works on old entries when all marked values are supplied explicitly. Single-parameter scopes keep their original tag set.
 
 </details>
 
@@ -591,7 +599,7 @@ Use `$this->user->getKey()` when building the query, then pass a model instance 
 
 ```php
 $query = UserPosts::make(user: $user);
-UserPosts::flushScope(user: $user);
+UserPosts::flushCacheByScope(user: $user);
 ```
 
 The identity is the **concrete model class, connection name, and primary key**, including integer/string key type. Two instances of the same record share a scope; attributes, dirty state, loaded relations, and the `exists` flag do not affect it. Models are not serialized into tags. Normalization does not open a database connection or load the record.
@@ -614,7 +622,7 @@ final readonly class PostScopeData implements CacheScopeKey
 }
 ```
 
-Mark the promoted data-object parameter with `#[CacheScope]`, then pass equivalent objects to `make()` and `flushScope()`. Its string is a component of the hashed identity, not a literal tag for `flushCacheTags()`.
+Mark the promoted data-object parameter with `#[CacheScope]`, then pass equivalent objects to `make()` and `flushCacheByScope()`. Its string is a component of the hashed identity, not a literal tag for `flushCacheByTags()`.
 
 Custom keys control their own namespace: the DTO class is deliberately excluded, while the query class, parameter names, and other marked values still participate. Use domain prefixes or structured encoding to distinguish unrelated custom identities. `CacheScopeKey` takes priority over built-in model/enum normalization. Its method must be deterministic and free of SQL or other I/O; it may run more than once. Exceptions propagate, and an empty component is allowed and distinct from `null` or an ordinary string scope.
 
@@ -629,22 +637,36 @@ $query = PaginatedPostsForUser::make(userId: 42)
 $posts = $query->effect();
 
 // Any query in this store carrying either tag is invalidated.
-PaginatedPostsForUser::flushCacheTags('posts:user:42', 'posts:user:57');
+PaginatedPostsForUser::flushCacheByTags('posts:user:42', 'posts:user:57');
 ```
 
 `setCacheTags(...)` replaces manual tags; `mergeCacheTags(...)` appends them. Automatic scope and base tags remain. Manual tags are application-defined; place shared defaults in your query constructor when every instance should use them.
 
-`flushCacheTags()` invalidates the **union** of entries carrying any supplied tag. It does not implicitly include the calling class's base tag. A shared tag can invalidate other query classes, either cache strategy, and tagged Laravel entries in the same backend namespace. Distinct configured store names only isolate data when their backend namespaces are separate.
+`flushCacheByTags()` invalidates the **union** of entries carrying any supplied tag. It does not implicitly include the calling class's base tag. A shared tag can invalidate other query classes, either cache strategy, and tagged Laravel entries in the same backend namespace. Distinct configured store names only isolate data when their backend namespaces are separate.
 
 At least one `string|Stringable` tag is required. Values are converted without trimming, case changes, or prefixes; empty strings are rejected before any store access. All tags are validated before invalidation. The method returns the store's boolean result and propagates errors, with no query construction, query SQL, or global-flush fallback.
 
-`flushBaseCache()` invalidates every entry carrying the calling class's fully qualified base tag. You can also run:
+`flushCache()` invalidates every entry carrying the calling class's fully qualified base tag. You can also run:
 
 ```bash
 php artisan sculptor:flush-cache 'App\Queries\Post\PaginatedPostsForUser'
 ```
 
 The command exits with `0` on success and `1` for an invalid query class or failed flush.
+
+### Migrating Invalidation Calls
+
+The invalidation methods from v4.0.0 have been renamed:
+
+| Previous method | New method |
+| --- | --- |
+| `flushBaseCache()` | `flushCache()` |
+| `flushCacheTags(...)` | `flushCacheByTags(...)` |
+| `flushScope(...)` | `flushCacheByScope(...)` |
+
+Update application calls and custom implementations of the cache contracts. The previous method names have been removed without aliases. Parameters, return values, cache keys, tags, and invalidation behavior are unchanged. The `sculptor:flush-cache` command keeps its name and uses `flushCache()`.
+
+The separate `WithCacheTagInvalidation` and `WithCacheScopeInvalidation` contracts have also been removed. Use `WithCache`, or the matching `WithResultCache` / `WithBuilderCache` strategy contract. Custom implementations now provide all three invalidation methods together with the existing cache configuration methods; composing `HasCache` supplies the full implementation.
 
 ## Extend and Observe
 
@@ -669,7 +691,7 @@ The presets compose public traits. For most applications, start with a preset an
 
 The 13 `QueryResult*` traits are listed in [Choose Your Result](#choose-your-result). When composing custom bases, implement the matching `Atldays\Sculptor\Contracts` interfaces as the presets do.
 
-Both cached presets implement the optional `WithCacheTagInvalidation` and `WithCacheScopeInvalidation` contracts. These extend the existing cache contracts without adding requirements to custom implementations of `WithCache`, `WithResultCache`, or `WithBuilderCache`.
+`WithCache` defines the shared contract for cache duration, tags, store access, and all three invalidation methods: `flushCache()`, `flushCacheByTags()`, and `flushCacheByScope()`. `WithResultCache` and `WithBuilderCache` extend it to identify the execution strategy. Both cached presets inherit the full contract through their strategy interface and use `HasCache` for its implementation. Custom bases can compose `HasCache` or implement the complete contract themselves.
 
 ### Execution Events
 
@@ -704,7 +726,7 @@ $partialTag = CacheScopeResolver::make(PaginatedPostsForUser::class)
     ->tagForInvalidation(['userId' => 42]);
 ```
 
-`tag()` / `tags()` require an object and read its current values; no-scope queries return `null` / `[]`. Each resolution reads current model/custom identities without memoizing their values. On a class-only context these methods throw `LogicException`. `tagForArguments()` retains full tuple resolution with constructor defaults; `tagForInvalidation()` uses only supplied arguments. Neither constructs the query. Application code should normally use `flushScope()` and `cacheTags()`.
+`tag()` / `tags()` require an object and read its current values; no-scope queries return `null` / `[]`. Each resolution reads current model/custom identities without memoizing their values. On a class-only context these methods throw `LogicException`. `tagForArguments()` retains full tuple resolution with constructor defaults; `tagForInvalidation()` uses only supplied arguments. Neither constructs the query. Application code should normally use `flushCacheByScope()` and `cacheTags()`.
 
 The internal classes are grouped by responsibility:
 
